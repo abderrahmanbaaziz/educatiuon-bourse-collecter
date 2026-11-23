@@ -108,13 +108,40 @@ jobs:
 
           command -v docker >/dev/null || { echo "Docker is not installed on the VPS." >&2; exit 1; }
           docker compose version >/dev/null || { echo "Docker Compose v2 is not installed on the VPS." >&2; exit 1; }
+          command -v openssl >/dev/null || { echo "OpenSSL is required to generate the database password." >&2; exit 1; }
 
           mkdir -p "$deploy_path/shared" "$deploy_path/releases/$release_sha"
-          if [[ ! -f "$deploy_path/shared/.env" ]]; then
-            echo "Missing $deploy_path/shared/.env on the VPS." >&2
-            exit 1
+          env_file="$deploy_path/shared/.env"
+          touch "$env_file"
+          chmod 600 "$env_file"
+          sed -i 's/\r$//' "$env_file"
+
+          database_config_complete=1
+          for variable in POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD; do
+            if ! grep -Eq "^${variable}=.+$" "$env_file"; then
+              database_config_complete=0
+            fi
+          done
+
+          if (( database_config_complete == 0 )); then
+            if docker volume inspect bourse-collector_postgres_data >/dev/null 2>&1; then
+              echo "Database variables are missing, but an initialized PostgreSQL volume already exists." >&2
+              echo "Restore POSTGRES_DB, POSTGRES_USER, and POSTGRES_PASSWORD in $env_file instead of generating new credentials." >&2
+              exit 1
+            fi
+
+            for variable in POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD; do
+              sed -i "/^${variable}=/d" "$env_file"
+            done
+
+            {
+              printf 'POSTGRES_DB=bourse\n'
+              printf 'POSTGRES_USER=bourse\n'
+              printf 'POSTGRES_PASSWORD=%s\n' "$(openssl rand -hex 32)"
+            } >> "$env_file"
+            chmod 600 "$env_file"
+            echo "Generated persistent PostgreSQL credentials in $env_file"
           fi
-          chmod 600 "$deploy_path/shared/.env"
           REMOTE
 
       - name: Upload release

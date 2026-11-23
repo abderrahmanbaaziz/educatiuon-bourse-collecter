@@ -32,7 +32,7 @@ docker compose down --volumes   # destructive: removes local database and queue 
 
 ## Automatic VPS deployment
 
-The repository includes a CD-only GitHub Actions workflow that deploys every push to `main` over SSH. It keeps production secrets in a VPS-only `.env`, starts the Docker Compose stack, and checks application health before reporting success. See [DEPLOYMENT.md](DEPLOYMENT.md) for the one-time VPS and GitHub secret setup.
+The repository includes a CD-only GitHub Actions workflow that deploys every push to `main` over SSH. It keeps production secrets in a VPS-only `.env`, automatically generates missing PostgreSQL credentials on the first deployment, starts the Docker Compose stack, and checks application health before reporting success. PostgreSQL and Redis run in containers while their data persists in VPS-hosted Docker volumes. See [DEPLOYMENT.md](DEPLOYMENT.md) for the one-time VPS and GitHub secret setup.
 
 ## Existing environment file
 

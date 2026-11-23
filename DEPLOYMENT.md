@@ -20,7 +20,9 @@ Log out and back in after adding the user to the Docker group. Then copy the req
 /opt/bourse-collector/shared/.env
 ```
 
-This file stays on the VPS. Do not commit it or add it as a GitHub secret. PostgreSQL and Redis run inside Compose, so their public server URLs are not required. Set strong production database credentials in this file even though the containers are internal.
+This file stays on the VPS. Do not commit it or add it as a GitHub secret. It may be empty on the first deployment: the workflow automatically adds `POSTGRES_DB`, `POSTGRES_USER`, and a cryptographically random `POSTGRES_PASSWORD` before PostgreSQL starts. It never prints the generated password in the Actions log. AI, search, Telegram, and other provider values remain manual.
+
+PostgreSQL and Redis run inside Compose, so public database or Redis server URLs are not required. Their data lives in persistent Docker named volumes on the VPS, independently of the replaceable containers. Ordinary deployments and `docker compose down` preserve these volumes; `docker compose down --volumes` deletes them and must not be used in production.
 
 If a firewall is enabled, allow SSH and the chosen `APP_PORT` (default `3000`). For a public deployment, put a TLS reverse proxy such as Caddy or Nginx in front of the app instead of exposing port 3000 directly.
 
@@ -66,7 +68,7 @@ git push origin main
 
 Follow the run under the repository's **Actions** tab. Releases are stored under `/opt/bourse-collector/releases/<commit-sha>`, while `/opt/bourse-collector/current` points to the active one. The workflow restores the previous application release if Compose startup or the health check fails.
 
-Database migrations are deliberately not reversed during rollback. Keep schema migrations backward-compatible with the previous application release. PostgreSQL and Redis data remain in Docker named volumes across deployments.
+Database migrations are deliberately not reversed during rollback. Keep schema migrations backward-compatible with the previous application release. PostgreSQL and Redis data remain in Docker named volumes across deployments. If a PostgreSQL volume has already been initialized and its three database variables are later removed from the VPS `.env`, deployment stops instead of generating incompatible replacement credentials.
 
 Useful VPS commands:
 

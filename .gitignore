@@ -8,3 +8,4 @@ dist-worker
 *.log
 *.tsbuildinfo
 playwright/.cache
+server/
