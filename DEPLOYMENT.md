@@ -1,6 +1,6 @@
 # VPS deployment
 
-Every push to `main` triggers the CD-only workflow in `.github/workflows/deploy.yml`. It sends that exact revision to the VPS, builds the Docker Compose services, runs the existing migration service, starts the application and worker, and verifies `/api/health` from inside the app container. No CI or test job is included.
+Every push to `main` triggers the CD-only workflow in `.github/workflows/deploy.yml`. It sends that exact revision to the VPS, builds the Docker Compose services, runs the existing migration service, starts the application, worker, and Caddy, then verifies both the internal health endpoint and public HTTPS. No CI or test job is included.
 
 ## 1. Prepare the VPS once
 
@@ -22,9 +22,11 @@ Log out and back in after adding the user to the Docker group. Then copy the req
 
 This file stays on the VPS. Do not commit it or add it as a GitHub secret. It may be empty on the first deployment: the workflow automatically adds `POSTGRES_DB`, `POSTGRES_USER`, and a cryptographically random `POSTGRES_PASSWORD` before PostgreSQL starts. It never prints the generated password in the Actions log. AI, search, Telegram, and other provider values remain manual.
 
-PostgreSQL and Redis run inside Compose, so public database or Redis server URLs are not required. Their data lives in persistent Docker named volumes on the VPS, independently of the replaceable containers. Ordinary deployments and `docker compose down` preserve these volumes; `docker compose down --volumes` deletes them and must not be used in production.
+PostgreSQL and Redis run inside Compose, so public database or Redis server URLs are not required. Their data lives in persistent Docker named volumes on the VPS, independently of the replaceable containers. Caddy certificate and runtime state similarly live in the `caddy_data` and `caddy_config` volumes. Ordinary deployments and `docker compose down` preserve these volumes; `docker compose down --volumes` deletes them and must not be used in production.
 
-If a firewall is enabled, allow SSH and the chosen `APP_PORT` (default `3000`). For a public deployment, put a TLS reverse proxy such as Caddy or Nginx in front of the app instead of exposing port 3000 directly.
+Caddy is included in Compose and automatically obtains and renews the TLS certificate. Ensure the domain's `A` record points to the VPS, then allow inbound TCP ports `80` and `443` (and optionally UDP `443` for HTTP/3) through the provider firewall and VPS firewall. Do not expose `APP_PORT`: Compose binds it to `127.0.0.1` for VPS-local diagnostics only. PostgreSQL and Redis have no host port mappings.
+
+Production defaults to `pbxlab.online`. To use another hostname, create a GitHub Actions repository variable named `APP_DOMAIN`; each deployment stores it in the VPS `.env`. For local Compose use, `APP_DOMAIN` defaults to `localhost`.
 
 ## 2. Create a deployment SSH key
 
@@ -75,5 +77,6 @@ Useful VPS commands:
 ```bash
 cd /opt/bourse-collector/current
 docker compose ps
-docker compose logs -f app worker
+docker compose logs -f app worker caddy
+curl --fail https://pbxlab.online/api/health
 ```

@@ -24,6 +24,7 @@ jobs:
       VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
       VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
       VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+      APP_DOMAIN: ${{ vars.APP_DOMAIN || 'pbxlab.online' }}
 
     steps:
       - name: Check out the pushed revision
@@ -49,6 +50,11 @@ jobs:
 
           if [[ ! "$VPS_DEPLOY_PATH" =~ ^/[A-Za-z0-9._/-]+$ ]]; then
             echo "VPS_DEPLOY_PATH must be an absolute Linux path without spaces." >&2
+            exit 1
+          fi
+
+          if [[ ! "$APP_DOMAIN" =~ ^([A-Za-z0-9-]+\.)+[A-Za-z]{2,}$ ]]; then
+            echo "APP_DOMAIN must be a hostname such as pbxlab.online." >&2
             exit 1
           fi
 
@@ -83,11 +89,12 @@ jobs:
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             "$VPS_USER@$VPS_HOST" \
-            bash -s -- "$VPS_DEPLOY_PATH" "$GITHUB_SHA" <<'REMOTE'
+            bash -s -- "$VPS_DEPLOY_PATH" "$GITHUB_SHA" "$APP_DOMAIN" <<'REMOTE'
           set -Eeuo pipefail
 
           deploy_path="$1"
           release_sha="$2"
+          app_domain="$3"
 
           if [[ "$deploy_path" != /* ]] || [[ ${#deploy_path} -lt 8 ]]; then
             echo "VPS_DEPLOY_PATH must be a specific absolute path." >&2
@@ -115,6 +122,11 @@ jobs:
           touch "$env_file"
           chmod 600 "$env_file"
           sed -i 's/\r$//' "$env_file"
+
+          # This repository variable is the production source of truth. Caddy
+          # reads it when requesting and renewing the site's TLS certificate.
+          sed -i '/^APP_DOMAIN=/d' "$env_file"
+          printf 'APP_DOMAIN=%s\n' "$app_domain" >> "$env_file"
 
           database_config_complete=1
           for variable in POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD; do
@@ -195,10 +207,13 @@ jobs:
             healthy=0
             for attempt in $(seq 1 60); do
               worker_id="$(docker compose ps -q worker)"
+              caddy_id="$(docker compose ps -q caddy)"
               if docker compose exec -T app node -e \
                 "fetch('http://127.0.0.1:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))" \
                 && [[ -n "$worker_id" ]] \
-                && [[ "$(docker inspect --format '{{.State.Health.Status}}' "$worker_id" 2>/dev/null)" == "healthy" ]]; then
+                && [[ "$(docker inspect --format '{{.State.Health.Status}}' "$worker_id" 2>/dev/null)" == "healthy" ]] \
+                && [[ -n "$caddy_id" ]] \
+                && [[ "$(docker inspect --format '{{.State.Health.Status}}' "$caddy_id" 2>/dev/null)" == "healthy" ]]; then
                 healthy=1
                 break
               fi
@@ -212,7 +227,7 @@ jobs:
 
           if (( deploy_ok == 0 )); then
             echo "Deployment failed. Recent service logs:" >&2
-            docker compose logs --tail=150 app worker migrate >&2 || true
+            docker compose logs --tail=150 app worker migrate caddy >&2 || true
 
             if [[ -n "$previous_release" && -d "$previous_release" ]]; then
               echo "Restoring previous application release: $previous_release" >&2
@@ -229,6 +244,20 @@ jobs:
           docker compose ps
           echo "Successfully deployed revision $release_sha"
           REMOTE
+
+      - name: Verify public HTTPS endpoint
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          curl \
+            --fail \
+            --show-error \
+            --silent \
+            --retry 12 \
+            --retry-delay 5 \
+            --retry-all-errors \
+            --max-time 15 \
+            "https://${APP_DOMAIN}/api/health" >/dev/null
 
       - name: Remove temporary SSH material
         if: always()

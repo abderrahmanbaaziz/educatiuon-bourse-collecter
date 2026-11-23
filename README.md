@@ -25,14 +25,14 @@ Useful commands:
 
 ```powershell
 docker compose ps
-docker compose logs -f app worker
+docker compose logs -f app worker caddy
 docker compose down             # data is retained
 docker compose down --volumes   # destructive: removes local database and queue data
 ```
 
 ## Automatic VPS deployment
 
-The repository includes a CD-only GitHub Actions workflow that deploys every push to `main` over SSH. It keeps production secrets in a VPS-only `.env`, automatically generates missing PostgreSQL credentials on the first deployment, starts the Docker Compose stack, and checks application health before reporting success. PostgreSQL and Redis run in containers while their data persists in VPS-hosted Docker volumes. See [DEPLOYMENT.md](DEPLOYMENT.md) for the one-time VPS and GitHub secret setup.
+The repository includes a CD-only GitHub Actions workflow that deploys every push to `main` over SSH. It keeps production secrets in a VPS-only `.env`, automatically generates missing PostgreSQL credentials on the first deployment, starts the Docker Compose stack, and checks application health before reporting success. Caddy terminates HTTPS on ports 80/443 while the app's direct port is bound only to VPS loopback. PostgreSQL, Redis, and Caddy state persist in VPS-hosted Docker volumes. See [DEPLOYMENT.md](DEPLOYMENT.md) for the one-time VPS and GitHub secret setup.
 
 ## Existing environment file
 
