@@ -19,10 +19,13 @@ function errorResponse(request: Request, error: string, status: number, next: st
   const acceptsJson = request.headers.get("accept")?.includes("application/json");
   const headers = retryAfter ? { "retry-after": String(retryAfter) } : undefined;
   if (acceptsJson) return NextResponse.json({ error }, { status, headers });
-  const location = new URL("/login", request.url);
+  const location = new URL("/login", "https://internal.invalid");
   location.searchParams.set("error", error);
   if (next !== "/") location.searchParams.set("next", next);
-  return NextResponse.redirect(location, { status: 303, headers });
+  return new NextResponse(null, {
+    status: 303,
+    headers: { ...headers, location: `${location.pathname}${location.search}` },
+  });
 }
 
 export async function POST(request: Request) {
@@ -78,7 +81,7 @@ export async function POST(request: Request) {
 
   await clearLoginRateLimit(auth.REDIS_URL, ip, username, auth.AUTH_SESSION_SECRET);
   const token = await createSessionToken(auth.ADMIN_USERNAME, auth.AUTH_SESSION_SECRET, auth.AUTH_SESSION_TTL_SECONDS);
-  const response = NextResponse.redirect(new URL(next, request.url), { status: 303 });
+  const response = new NextResponse(null, { status: 303, headers: { location: next } });
   response.cookies.set(SESSION_COOKIE_NAME, token, sessionCookieOptions(auth.AUTH_SESSION_TTL_SECONDS));
   response.headers.set("cache-control", "no-store");
   return response;
