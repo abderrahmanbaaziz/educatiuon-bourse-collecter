@@ -1,0 +1,403 @@
+{
+  "metadata": {
+    "startedAt": "2026-11-23T10:33:58.162Z",
+    "finishedAt": "2026-11-23T10:35:21.690Z",
+    "mode": "isolated-live-workflow-no-database",
+    "limits": {
+      "seedSources": 2,
+      "maxAgentRouterCalls": 3,
+      "maxDepth": 1
+    },
+    "agentRouter": {
+      "configured": true,
+      "model": "openai/gpt-5.6-sol"
+    },
+    "warning": "Results are validated extraction candidates, not VERIFIED scholarships."
+  },
+  "sourceRegistry": {
+    "markdownFile": "initial-sourses.md",
+    "parsedCount": 88,
+    "selected": [
+      {
+        "providerName": "Campus France Eiffel 2027",
+        "url": "https://www.algerie.campusfrance.org/lancement-de-l-appel-a-candidatures-france-excellence-eiffel-2027",
+        "priority": 50,
+        "trustLevel": "UNVERIFIED"
+      },
+      {
+        "providerName": "MESRS – Bourses",
+        "url": "https://www.mesrs.dz/fr/cooperation-interuniversitaire1/bourses/",
+        "priority": 90,
+        "trustLevel": "UNVERIFIED"
+      }
+    ]
+  },
+  "pages": [
+    {
+      "source": "Campus France Eiffel 2027",
+      "url": "https://www.algerie.campusfrance.org/lancement-de-l-appel-a-candidatures-france-excellence-eiffel-2027",
+      "httpStatus": 200,
+      "contentType": "text/html; charset=UTF-8",
+      "title": "Lancement de l'appel à candidatures France Excellence EIFFEL 2027 ! | Campus France",
+      "language": "fr",
+      "contentHash": "9db8900a6eb58bd1e155cfd4345a5e264fac28ed584397f6390ad148cf0da4d2",
+      "contentLength": 4720,
+      "contentPreview": "FacebookTwitterLinkedInCourriel Lancement de l'appel à candidatures France Excellence EIFFEL 2027 ! Étudiants L'appel à candidatures 2027 pour les Bourses France Excellence EIFFEL est ouvert jusqu'au mercredi 6 janvier 2027 inclus ! (niveaux Masters & Doctorat pour la rentrée académique 2027/2028). Le programme de bourses Eiffel est un outil développé par le Ministère de l’Europe et des Affaires étrangères afin de permettre aux établissements français d’enseignement supérieur d’accueillir les meilleurs étudiants étrangers dans des formations diplômantes au niveau Master et en Doctorat. Durée de la bourse : De 12 mois maximum lors d’une inscription en 2ème année de master (M2). De 24 mois maximum pour une inscription en 1ère année de master (M1). De 36 mois maximum pour la préparation d’un diplôme d’ingénieur. Domaines d'études éligibles pour le niveau Master et le Doctorat : Deux grands champs disciplinaires concernés par les bourses Eiffel couvrent les 7 domaines d’études suivants pour les volets Master et Doctorat. Pour les sciences et techniques Biologie et santé Transition écologique Mathématiques et numérique Sciences de l'ingénieur et ingénierie Pour les sciences humaines et sociales Histoire, langue et civilisation française Droit et Science politique Economie Gestion Montant de la bourse : Volet niveau Doctorat : 2.100€ /mois Volet niveau Master : 1.200€ /mois Comment postuler ? 1ère étape : Contacter le service des Relations internationales d'un établissement françai",
+      "links": [
+        {
+          "id": "link_13",
+          "url": "https://www.algerie.campusfrance.org/programmes-de-bourses-de-l-institut-francais-d-algerie",
+          "text": "Programmes de bourses de l'Institut français d'Algérie",
+          "context": "Programmes de bourses de l'Institut français d'Algérie"
+        },
+        {
+          "id": "link_14",
+          "url": "https://www.algerie.campusfrance.org/les-bourses-destinees-aux-etudiants-etrangers-en-france",
+          "text": "Les bourses destinées aux étudiants étrangers en France",
+          "context": "Les bourses destinées aux étudiants étrangers en France"
+        },
+        {
+          "id": "link_56",
+          "url": "https://www.campusfrance.org/system/files/medias/documents/2026-10/reglementation_bourse_eiffel_2027.pdf",
+          "text": "Réglementation de la bourse Eiffel - Session 2027",
+          "context": "Réglementation de la bourse Eiffel - Session 2027"
+        },
+        {
+          "id": "link_1",
+          "url": "https://www.algerie.campusfrance.org/lancement-de-l-appel-a-candidatures-france-excellence-eiffel-2027",
+          "text": "Aller au contenu principal",
+          "context": "Aller au contenu principal CAMPUS FRANCE ALGÉRIE Le service Campus France Bienvenue à Campus France Algérie La procédure Campus France Algérie, pour qui ? Contact et horaires d’attention au public Bienvenue à Campus France Algérie La procédure Campus France Algérie, pour qui ? Contact et horaires d’attention au public Centre d'examens délocalisés de l'IFA Score IAE Message : test unique d'aptitude aux études universitaires en gestion Programmes de bourses de l'Institut français d'Algérie Les bou"
+        }
+      ]
+    }
+  ],
+  "aiCalls": [
+    {
+      "task": "CRAWL_NAVIGATION",
+      "url": "https://www.algerie.campusfrance.org/lancement-de-l-appel-a-candidatures-france-excellence-eiffel-2027",
+      "ok": true,
+      "usage": {
+        "input_tokens": 5141,
+        "output_tokens": 528,
+        "total_tokens": 5669
+      },
+      "result": {
+        "actions": [
+          {
+            "type": "FOLLOW_LINKS",
+            "link_ids": [
+              "link_55",
+              "link_56"
+            ],
+            "reason": "Follow the official 2027 Eiffel application guide and regulations to verify complete eligibility conditions, scholarship benefits, deadlines, and the institution-led application process."
+          }
+        ],
+        "is_scholarship_related": true,
+        "investigation_complete": false,
+        "confidence": 0.99
+      }
+    },
+    {
+      "task": "SCHOLARSHIP_EXTRACTION",
+      "url": "https://www.algerie.campusfrance.org/lancement-de-l-appel-a-candidatures-france-excellence-eiffel-2027",
+      "ok": true,
+      "usage": {
+        "input_tokens": 1554,
+        "output_tokens": 5860,
+        "total_tokens": 7414
+      },
+      "result": {
+        "title": "Bourses France Excellence EIFFEL 2027",
+        "provider": "French Ministry for Europe and Foreign Affairs",
+        "institution": "French higher education institutions selected by the applicant and acting as nominating institutions",
+        "host_country": "France",
+        "eligible_nationalities": [],
+        "degree_levels": [
+          "Master's",
+          "Doctorate"
+        ],
+        "academic_fields": [
+          "Biology and health",
+          "Ecological transition",
+          "Mathematics and digital sciences",
+          "Engineering sciences and engineering",
+          "History, French language and civilization",
+          "Law and political science",
+          "Economics and management"
+        ],
+        "funding_category": "PARTIAL",
+        "tuition_coverage": null,
+        "monthly_stipend": "Master's: €1,200 per month; Doctorate: €2,100 per month",
+        "accommodation": null,
+        "travel_allowance": null,
+        "health_insurance": null,
+        "language_requirements": null,
+        "academic_requirements": "Selection targets excellent foreign students nominated by a French higher education institution. Master's applicants must be applying for Eiffel for the first time and cannot combine it with another French government scholarship. For 12- or 18-month doctoral awards, cotutelle or codirection is mandatory; cotutelle is incompatible with the 36-month doctoral award.",
+        "age_restrictions": null,
+        "opening_date": null,
+        "deadline": "2027-01-06 (deadline for French institutions to submit to Campus France; applicants must obtain the institution's own deadline)",
+        "academic_year": "2027/2028",
+        "required_documents": [
+          "Signed candidate commitment form",
+          "For a 12- or 18-month doctorate with cotutelle: the cotutelle agreement or an institutional attestation that it is being finalized",
+          "For doctoral codirection: codirection attestation",
+          "Signed PDF bordereau listing submitted applications, provided by the nominating institution"
+        ],
+        "application_process": "The applicant contacts the international relations office of a chosen French institution for its procedure and internal deadline. If the institution accepts and supports the application, it submits the dossier online to Campus France Paris. Applications submitted directly by students or by foreign institutions are ineligible.",
+        "application_url": null,
+        "publication_date": "2026-10-04",
+        "language": null,
+        "confidence": 0.97,
+        "evidence": [
+          {
+            "field": "title",
+            "value": "Bourses France Excellence EIFFEL 2027",
+            "evidence_text": "L'appel à candidatures 2027 pour les Bourses France Excellence EIFFEL"
+          },
+          {
+            "field": "degree_levels",
+            "value": "Master's; Doctorate",
+            "evidence_text": "niveaux Masters & Doctorat pour la rentrée académique 2027/2028"
+          },
+          {
+            "field": "academic_year",
+            "value": "2027/2028",
+            "evidence_text": "niveaux Masters & Doctorat pour la rentrée académique 2027/2028"
+          },
+          {
+            "field": "academic_fields",
+            "value": "Seven listed fields",
+            "evidence_text": "Biologie et santé; Transition écologique; Mathématiques et numérique; Sciences de l'ingénieur et ingénierie; Histoire, langue et civilisation française; Droit et Science politique; Economie Gestion"
+          },
+          {
+            "field": "provider",
+            "value": "French Ministry for Europe and Foreign Affairs",
+            "evidence_text": "outil développé par le Ministère de l’Europe et des Affaires étrangères"
+          },
+          {
+            "field": "eligible_nationalities",
+            "value": null,
+            "evidence_text": "permettre aux établissements français d’enseignement supérieur d’accueillir les meilleurs étudiants étrangers"
+          },
+          {
+            "field": "institution",
+            "value": "French higher education institutions",
+            "evidence_text": "Tous les établissements d’enseignement supérieur français peuvent déposer des candidatures."
+          },
+          {
+            "field": "host_country",
+            "value": "France",
+            "evidence_text": "projet d’études en France"
+          },
+          {
+            "field": "monthly_stipend",
+            "value": "Master's: €1,200/month; Doctorate: €2,100/month",
+            "evidence_text": "Volet niveau Doctorat : 2.100€ /mois Volet niveau Master : 1.200€ /mois"
+          },
+          {
+            "field": "funding_category",
+            "value": "PARTIAL",
+            "evidence_text": "Volet niveau Doctorat : 2.100€ /mois Volet niveau Master : 1.200€ /mois"
+          },
+          {
+            "field": "academic_requirements",
+            "value": "First-time Master's applicant; no concurrent French government scholarship",
+            "evidence_text": "L’étudiant doit être candidat pour la 1ère fois (non cumulable avec une autre bourse du gouvernement français)."
+          },
+          {
+            "field": "academic_requirements",
+            "value": "Cotutelle or codirection required for 12- and 18-month doctoral awards",
+            "evidence_text": "La cotutelle ou la codirection sont obligatoires pour ces durées de bourse."
+          },
+          {
+            "field": "application_process",
+            "value": "Application submitted online by the French institution",
+            "evidence_text": "L'établissement effectue le dépôt en ligne de votre candidature, sur le site dédié de l'Agence Campus France Paris."
+          },
+          {
+            "field": "application_process",
+            "value": "Direct student and foreign-institution applications are ineligible",
+            "evidence_text": "Les candidatures envoyées directement par les étudiants ou transmises par des établissements étrangers seront déclarées inéligibles."
+          },
+          {
+            "field": "deadline",
+            "value": "2027-01-06",
+            "evidence_text": "Date limite de dépôt par les établissements des dossiers de candidatures auprès de Campus France : mercredi 6 janvier 2027 inclus"
+          },
+          {
+            "field": "required_documents",
+            "value": "Signed candidate commitment",
+            "evidence_text": "Engagement du candidat (Celui-ci doit être signé par le candidat...)"
+          },
+          {
+            "field": "required_documents",
+            "value": "Conditional cotutelle-finalization attestation",
+            "evidence_text": "une attestation de l'établissement attestant que la cotutelle est en cours de finalisation est autorisée"
+          },
+          {
+            "field": "required_documents",
+            "value": "Codirection attestation",
+            "evidence_text": "obligatoire de joindre l'attestation de codirection"
+          },
+          {
+            "field": "publication_date",
+            "value": "2026-10-04",
+            "evidence_text": "Publié le : 04/10/2026 à 22:27"
+          }
+        ]
+      }
+    }
+  ],
+  "scholarships": [
+    {
+      "title": "Bourses France Excellence EIFFEL 2027",
+      "provider": "French Ministry for Europe and Foreign Affairs",
+      "institution": "French higher education institutions selected by the applicant and acting as nominating institutions",
+      "host_country": "France",
+      "eligible_nationalities": [],
+      "degree_levels": [
+        "Master's",
+        "Doctorate"
+      ],
+      "academic_fields": [
+        "Biology and health",
+        "Ecological transition",
+        "Mathematics and digital sciences",
+        "Engineering sciences and engineering",
+        "History, French language and civilization",
+        "Law and political science",
+        "Economics and management"
+      ],
+      "funding_category": "PARTIAL",
+      "tuition_coverage": null,
+      "monthly_stipend": "Master's: €1,200 per month; Doctorate: €2,100 per month",
+      "accommodation": null,
+      "travel_allowance": null,
+      "health_insurance": null,
+      "language_requirements": null,
+      "academic_requirements": "Selection targets excellent foreign students nominated by a French higher education institution. Master's applicants must be applying for Eiffel for the first time and cannot combine it with another French government scholarship. For 12- or 18-month doctoral awards, cotutelle or codirection is mandatory; cotutelle is incompatible with the 36-month doctoral award.",
+      "age_restrictions": null,
+      "opening_date": null,
+      "deadline": "2027-01-06 (deadline for French institutions to submit to Campus France; applicants must obtain the institution's own deadline)",
+      "academic_year": "2027/2028",
+      "required_documents": [
+        "Signed candidate commitment form",
+        "For a 12- or 18-month doctorate with cotutelle: the cotutelle agreement or an institutional attestation that it is being finalized",
+        "For doctoral codirection: codirection attestation",
+        "Signed PDF bordereau listing submitted applications, provided by the nominating institution"
+      ],
+      "application_process": "The applicant contacts the international relations office of a chosen French institution for its procedure and internal deadline. If the institution accepts and supports the application, it submits the dossier online to Campus France Paris. Applications submitted directly by students or by foreign institutions are ineligible.",
+      "application_url": null,
+      "publication_date": "2026-10-04",
+      "language": null,
+      "confidence": 0.97,
+      "evidence": [
+        {
+          "field": "title",
+          "value": "Bourses France Excellence EIFFEL 2027",
+          "evidence_text": "L'appel à candidatures 2027 pour les Bourses France Excellence EIFFEL"
+        },
+        {
+          "field": "degree_levels",
+          "value": "Master's; Doctorate",
+          "evidence_text": "niveaux Masters & Doctorat pour la rentrée académique 2027/2028"
+        },
+        {
+          "field": "academic_year",
+          "value": "2027/2028",
+          "evidence_text": "niveaux Masters & Doctorat pour la rentrée académique 2027/2028"
+        },
+        {
+          "field": "academic_fields",
+          "value": "Seven listed fields",
+          "evidence_text": "Biologie et santé; Transition écologique; Mathématiques et numérique; Sciences de l'ingénieur et ingénierie; Histoire, langue et civilisation française; Droit et Science politique; Economie Gestion"
+        },
+        {
+          "field": "provider",
+          "value": "French Ministry for Europe and Foreign Affairs",
+          "evidence_text": "outil développé par le Ministère de l’Europe et des Affaires étrangères"
+        },
+        {
+          "field": "eligible_nationalities",
+          "value": null,
+          "evidence_text": "permettre aux établissements français d’enseignement supérieur d’accueillir les meilleurs étudiants étrangers"
+        },
+        {
+          "field": "institution",
+          "value": "French higher education institutions",
+          "evidence_text": "Tous les établissements d’enseignement supérieur français peuvent déposer des candidatures."
+        },
+        {
+          "field": "host_country",
+          "value": "France",
+          "evidence_text": "projet d’études en France"
+        },
+        {
+          "field": "monthly_stipend",
+          "value": "Master's: €1,200/month; Doctorate: €2,100/month",
+          "evidence_text": "Volet niveau Doctorat : 2.100€ /mois Volet niveau Master : 1.200€ /mois"
+        },
+        {
+          "field": "funding_category",
+          "value": "PARTIAL",
+          "evidence_text": "Volet niveau Doctorat : 2.100€ /mois Volet niveau Master : 1.200€ /mois"
+        },
+        {
+          "field": "academic_requirements",
+          "value": "First-time Master's applicant; no concurrent French government scholarship",
+          "evidence_text": "L’étudiant doit être candidat pour la 1ère fois (non cumulable avec une autre bourse du gouvernement français)."
+        },
+        {
+          "field": "academic_requirements",
+          "value": "Cotutelle or codirection required for 12- and 18-month doctoral awards",
+          "evidence_text": "La cotutelle ou la codirection sont obligatoires pour ces durées de bourse."
+        },
+        {
+          "field": "application_process",
+          "value": "Application submitted online by the French institution",
+          "evidence_text": "L'établissement effectue le dépôt en ligne de votre candidature, sur le site dédié de l'Agence Campus France Paris."
+        },
+        {
+          "field": "application_process",
+          "value": "Direct student and foreign-institution applications are ineligible",
+          "evidence_text": "Les candidatures envoyées directement par les étudiants ou transmises par des établissements étrangers seront déclarées inéligibles."
+        },
+        {
+          "field": "deadline",
+          "value": "2027-01-06",
+          "evidence_text": "Date limite de dépôt par les établissements des dossiers de candidatures auprès de Campus France : mercredi 6 janvier 2027 inclus"
+        },
+        {
+          "field": "required_documents",
+          "value": "Signed candidate commitment",
+          "evidence_text": "Engagement du candidat (Celui-ci doit être signé par le candidat...)"
+        },
+        {
+          "field": "required_documents",
+          "value": "Conditional cotutelle-finalization attestation",
+          "evidence_text": "une attestation de l'établissement attestant que la cotutelle est en cours de finalisation est autorisée"
+        },
+        {
+          "field": "required_documents",
+          "value": "Codirection attestation",
+          "evidence_text": "obligatoire de joindre l'attestation de codirection"
+        },
+        {
+          "field": "publication_date",
+          "value": "2026-10-04",
+          "evidence_text": "Publié le : 04/10/2026 à 22:27"
+        }
+      ],
+      "source_url": "https://www.algerie.campusfrance.org/lancement-de-l-appel-a-candidatures-france-excellence-eiffel-2027",
+      "workflow_status": "NEEDS_REVIEW"
+    }
+  ],
+  "errors": [
+    {
+      "stage": "crawl",
+      "source": "MESRS – Bourses",
+      "url": "https://www.mesrs.dz/fr/cooperation-interuniversitaire1/bourses/",
+      "error": "Too many redirects"
+    }
+  ]
+}

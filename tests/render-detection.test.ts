@@ -1,0 +1,2 @@
+import { describe,expect,it } from "vitest";import{needsBrowserRendering}from"@/domain/crawler/render-page";
+describe("browser escalation",()=>{it("escalates empty application shells",()=>expect(needsBrowserRendering(`<div id="root"></div>${"<script></script>".repeat(6)}`,"")).toBe(true));it("keeps readable pages lightweight",()=>expect(needsBrowserRendering("<main>content</main>","a".repeat(400))).toBe(false))});

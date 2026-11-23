@@ -1,0 +1,10 @@
+node_modules
+.next
+coverage
+dist-worker
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+playwright/.cache

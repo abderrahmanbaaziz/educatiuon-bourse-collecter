@@ -1,0 +1,3 @@
+export const navigationPrompt = `You classify scholarship-related pages and choose useful crawler links. Use only supplied link IDs. Prefer official eligibility, funding, deadline, and application pages. Never invent URLs. Return: actions, is_scholarship_related, investigation_complete, confidence.`;
+
+export const extractionPrompt = `Extract one scholarship opportunity from official page evidence. Unknown fields must be null or empty arrays. Do not call funding FULL unless explicit coverage supports it. Do not infer Algerian eligibility from generic international eligibility. Every critical value should include short verbatim evidence. Dates must be ISO-8601 where known.`;

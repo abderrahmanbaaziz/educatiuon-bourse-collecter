@@ -1,0 +1,8 @@
+import { describe,expect,it } from "vitest";
+import { escapeTelegramHtml, formatScholarshipMessage } from "@/domain/notifications/telegram";
+
+describe("Telegram notifications",()=>{
+  it("escapes untrusted scholarship text",()=>expect(escapeTelegramHtml(`<script>&`)).toBe("&lt;script&gt;&amp;"));
+  it("formats a concise verified scholarship announcement",()=>{const message=formatScholarshipMessage({title:"Global <Master> Award",provider:"Example University",institution:null,hostCountry:"France",degreeLevels:["Master"],fundingCategory:"FULL",deadline:new Date("2027-03-15T00:00:00Z"),eligibleNationalities:["Algeria","International"],applicationUrl:"https://example.edu/apply?next=\"bad\"",sourceUrl:"https://example.edu/grant"});expect(message).toContain("New verified scholarship");expect(message).toContain("2027-03-15");expect(message).toContain("Global &lt;Master&gt; Award");expect(message).toContain("%22bad%22");expect(message.length).toBeLessThanOrEqual(4096)});
+  it("does not claim Algerian eligibility when none was extracted",()=>{const message=formatScholarshipMessage({title:"Research Award",provider:null,institution:null,hostCountry:null,degreeLevels:[],fundingCategory:"UNKNOWN",deadline:null,eligibleNationalities:[],applicationUrl:null,sourceUrl:"https://example.edu/grant"});expect(message).not.toContain("Algeria");expect(message).not.toContain("Eligibility listed")});
+});

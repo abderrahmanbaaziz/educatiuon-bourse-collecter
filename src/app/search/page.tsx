@@ -1,0 +1,1 @@
+import{SearchIntelligence}from"@/components/search-intelligence";export default function Page(){return <><header className="heading"><div><span className="eyebrow">Search intelligence</span><h1>Query performance</h1><p>SerpAPI execution is credential-gated and usage is tracked per account.</p></div></header><SearchIntelligence/></>}

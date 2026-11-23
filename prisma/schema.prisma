@@ -1,0 +1,324 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SourceCategory {
+  UNIVERSITY
+  GOVERNMENT
+  PROGRAM
+  PORTAL
+  NGO
+  OTHER
+}
+enum TrustLevel {
+  UNVERIFIED
+  TRUSTED
+  OFFICIAL
+}
+enum CrawlStatus {
+  QUEUED
+  ACTIVE
+  SUCCEEDED
+  FAILED
+  PAUSED
+  CANCELLED
+}
+enum FrontierStatus {
+  PENDING
+  PROCESSING
+  VISITED
+  FAILED
+  SKIPPED
+}
+enum ScholarshipStatus {
+  DISCOVERED
+  CRAWLING
+  EXTRACTED
+  NEEDS_REVIEW
+  VERIFIED
+  EXPIRED
+  REJECTED
+}
+enum VerificationStatus {
+  EXTRACTED
+  CONFIRMED
+  CONFLICTING
+  REJECTED
+}
+enum FundingCategory {
+  FULL
+  PARTIAL
+  UNKNOWN
+}
+enum AIStatus {
+  SUCCEEDED
+  FAILED
+  REJECTED
+}
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+model Source {
+  id                 String @id @default(cuid())
+  providerName       String
+  homepage           String
+  scholarshipUrl     String @unique
+  canonicalUrl       String @unique
+  hostCountry        String?
+  languages          String[] @default([])
+  category           SourceCategory @default(OTHER)
+  trustLevel         TrustLevel @default(UNVERIFIED)
+  priority           Int @default(50)
+  notes              String?
+  enabled            Boolean @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  pages              SourcePage[]
+  crawlJobs          CrawlJob[]
+  scholarships       Scholarship[]
+  @@index([enabled, priority])
+}
+
+model SourcePage {
+  id          String @id @default(cuid())
+  sourceId    String
+  source      Source @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  url         String
+  canonicalUrl String @unique
+  title       String?
+  language    String?
+  content     String
+  contentHash String
+  httpStatus  Int
+  fetchedAt   DateTime @default(now())
+  links       Json
+  @@index([sourceId, fetchedAt])
+  @@index([contentHash])
+}
+
+model CrawlJob {
+  id           String @id @default(cuid())
+  sourceId     String?
+  source       Source? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  rootUrl      String
+  status       CrawlStatus @default(QUEUED)
+  maxDepth     Int
+  pageLimit    Int
+  visitedCount Int @default(0)
+  error        String?
+  startedAt    DateTime?
+  finishedAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  frontier     CrawlFrontier[]
+  @@index([status, createdAt])
+}
+
+model CrawlFrontier {
+  id           String @id @default(cuid())
+  crawlJobId   String
+  crawlJob     CrawlJob @relation(fields: [crawlJobId], references: [id], onDelete: Cascade)
+  url          String
+  canonicalUrl String
+  parentUrl    String?
+  depth        Int
+  status       FrontierStatus @default(PENDING)
+  attempts     Int @default(0)
+  lastError    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  @@unique([crawlJobId, canonicalUrl])
+  @@index([status, createdAt])
+}
+
+model SearchQuery {
+  id        String @id @default(cuid())
+  query     String
+  language  String?
+  active    Boolean @default(true)
+  createdAt DateTime @default(now())
+  runs      SearchRun[]
+  @@unique([query, language])
+}
+
+model SearchRun {
+  id             String @id @default(cuid())
+  searchQueryId  String
+  searchQuery    SearchQuery @relation(fields: [searchQueryId], references: [id], onDelete: Cascade)
+  account        String
+  resultCount    Int @default(0)
+  newUrlCount    Int @default(0)
+  status         String
+  error          String?
+  executedAt     DateTime @default(now())
+  results        SearchResult[]
+}
+
+model SearchResult {
+  id           String @id @default(cuid())
+  searchRunId  String
+  searchRun    SearchRun @relation(fields: [searchRunId], references: [id], onDelete: Cascade)
+  url          String
+  canonicalUrl String
+  title        String?
+  snippet      String?
+  position     Int?
+  createdAt    DateTime @default(now())
+  @@unique([searchRunId, canonicalUrl])
+  @@index([canonicalUrl])
+}
+
+model Scholarship {
+  id                    String @id @default(cuid())
+  sourceId              String?
+  source                Source? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  title                 String
+  normalizedTitle       String
+  provider              String?
+  institution           String?
+  hostCountry           String?
+  eligibleNationalities String[] @default([])
+  degreeLevels          String[] @default([])
+  academicFields        String[] @default([])
+  fundingCategory       FundingCategory @default(UNKNOWN)
+  tuitionCoverage       String?
+  monthlyStipend        String?
+  accommodation         String?
+  travelAllowance       String?
+  healthInsurance       String?
+  languageRequirements  String?
+  academicRequirements  String?
+  ageRestrictions       String?
+  opensAt               DateTime?
+  deadline              DateTime?
+  academicYear          String?
+  requiredDocuments     String[] @default([])
+  applicationProcess    String?
+  applicationUrl        String?
+  sourceUrl             String
+  publicationDate       DateTime?
+  language              String?
+  lastCheckedAt         DateTime @default(now())
+  status                ScholarshipStatus @default(DISCOVERED)
+  confidence            Float?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  evidence              ScholarshipEvidence[]
+  versions              ScholarshipVersion[]
+  statusHistory         ScholarshipStatusHistory[]
+  @@index([status, deadline])
+  @@index([normalizedTitle, provider, academicYear])
+}
+
+model ScholarshipStatusHistory {
+  id            String @id @default(cuid())
+  scholarshipId String
+  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id], onDelete: Cascade)
+  fromStatus    ScholarshipStatus?
+  toStatus      ScholarshipStatus
+  reason        String
+  actor         String @default("administrator")
+  createdAt     DateTime @default(now())
+  @@index([scholarshipId, createdAt])
+}
+
+model ScholarshipEvidence {
+  id                 String @id @default(cuid())
+  scholarshipId      String
+  scholarship        Scholarship @relation(fields: [scholarshipId], references: [id], onDelete: Cascade)
+  field              String
+  value              Json
+  sourceUrl          String
+  evidenceText       String
+  verificationStatus VerificationStatus @default(EXTRACTED)
+  createdAt          DateTime @default(now())
+  @@index([scholarshipId, field])
+}
+
+model ScholarshipVersion {
+  id            String @id @default(cuid())
+  scholarshipId String
+  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id], onDelete: Cascade)
+  snapshot      Json
+  reason        String
+  createdAt     DateTime @default(now())
+  @@index([scholarshipId, createdAt])
+}
+
+model AIInvocation {
+  id             String @id @default(cuid())
+  task           String
+  model          String
+  inputHash      String
+  promptTokens   Int?
+  completionTokens Int?
+  costUsd        Decimal? @db.Decimal(12, 6)
+  status         AIStatus
+  response       Json?
+  error          String?
+  createdAt      DateTime @default(now())
+  @@index([task, createdAt])
+}
+
+model APIUsage {
+  id           String @id @default(cuid())
+  provider     String
+  account      String?
+  operation    String
+  requests     Int @default(1)
+  tokens       Int?
+  costUsd      Decimal? @db.Decimal(12, 6)
+  billingMonth String
+  createdAt    DateTime @default(now())
+  @@index([provider, billingMonth])
+}
+
+model DiscoveryMetric {
+  id                   String @id @default(cuid())
+  dimension            String
+  dimensionValue       String
+  searchesExecuted     Int @default(0)
+  resultsReturned      Int @default(0)
+  newRelevantUrls      Int @default(0)
+  duplicateUrls        Int @default(0)
+  uniqueScholarships   Int @default(0)
+  verifiedScholarships Int @default(0)
+  costUsd              Decimal @default(0) @db.Decimal(12, 6)
+  periodStart          DateTime
+  periodEnd            DateTime
+  @@unique([dimension, dimensionValue, periodStart, periodEnd])
+}
+
+model SystemSetting {
+  key         String @id
+  value       Json
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model NotificationDelivery {
+  id                String @id @default(cuid())
+  channel           String
+  eventType         String
+  entityType        String
+  entityId          String
+  recipient         String
+  status            NotificationStatus @default(PENDING)
+  attempts          Int @default(0)
+  externalMessageId String?
+  error             String?
+  sentAt            DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@unique([channel, eventType, entityId, recipient])
+  @@index([status, createdAt])
+}

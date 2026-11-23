@@ -1,0 +1,1 @@
+import{Settings}from"@/components/settings";export default function Page(){return <><header className="heading"><div><span className="eyebrow">Safety, budgets & notifications</span><h1>System settings</h1><p>Control discovery spending and optional Telegram delivery.</p></div></header><Settings/></>}
