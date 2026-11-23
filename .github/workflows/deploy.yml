@@ -194,8 +194,11 @@ jobs:
           if (( deploy_ok == 1 )); then
             healthy=0
             for attempt in $(seq 1 60); do
+              worker_id="$(docker compose ps -q worker)"
               if docker compose exec -T app node -e \
-                "fetch('http://127.0.0.1:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"; then
+                "fetch('http://127.0.0.1:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))" \
+                && [[ -n "$worker_id" ]] \
+                && [[ "$(docker inspect --format '{{.State.Health.Status}}' "$worker_id" 2>/dev/null)" == "healthy" ]]; then
                 healthy=1
                 break
               fi
