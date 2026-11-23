@@ -13,8 +13,17 @@ const defaults = [
   ["notifications.telegram.crawlFailures", false, "Send crawler failure alerts"],
 ] as const;
 
-for (const [key, value, description] of defaults) {
-  await prisma.systemSetting.upsert({ where: { key }, update: {}, create: { key, value, description } });
+async function main() {
+  for (const [key, value, description] of defaults) {
+    await prisma.systemSetting.upsert({ where: { key }, update: {}, create: { key, value, description } });
+  }
 }
 
-await prisma.$disconnect();
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
