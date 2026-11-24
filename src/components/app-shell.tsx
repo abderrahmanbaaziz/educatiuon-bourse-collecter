@@ -11,7 +11,7 @@ const navigation = [
   { href: "/sources", label: "Sources" },
   { href: "/crawler", label: "Crawler" },
   { href: "/ai-history", label: "AI history" },
-  { href: "/search", label: "Search intelligence" },
+  { href: "/search", label: "Search queries" },
   { href: "/settings", label: "Settings" },
 ];
 

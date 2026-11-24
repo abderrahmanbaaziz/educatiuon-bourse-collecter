@@ -13,7 +13,7 @@ export async function GET() {
       searchQuery: true,
       results: {
         orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-        include: { crawlJob: { select: { status: true, scholarships: { select: { status: true } } } } },
+        include: { crawlJob: { select: { status: true, error: true, scholarships: { select: { title: true, status: true, rejectionReason: true, applicationUrl: true } } } } },
       },
     },
   });
@@ -35,6 +35,30 @@ export async function GET() {
       item.rejected += result.crawlJob?.scholarships.filter((scholarship) => scholarship.status === "REJECTED").length ?? 0;
       domains.set(domain, item);
     }
+    const trackingAvailable = run.resultCount === 0 || run.results.some((result) => Boolean(result.domain || result.crawlJobId));
+    const results = run.results.map((result) => {
+      const candidates = result.crawlJob?.scholarships.filter((scholarship) => ["NEEDS_REVIEW", "VERIFIED"].includes(scholarship.status)) ?? [];
+      const rejected = result.crawlJob?.scholarships.filter((scholarship) => scholarship.status === "REJECTED") ?? [];
+      let outcome = "NOT_QUEUED";
+      if (!trackingAvailable) outcome = "HISTORICAL";
+      else if (candidates.length) outcome = "VALID";
+      else if (rejected.length) outcome = "REJECTED";
+      else if (result.crawlJob?.status === "SUCCEEDED") outcome = "NO_OPPORTUNITY";
+      else if (result.crawlJob?.status === "FAILED") outcome = "CRAWL_FAILED";
+      else if (result.crawlJob) outcome = result.crawlJob.status;
+      return {
+        id: result.id,
+        title: result.title,
+        url: result.url,
+        domain: result.domain || (() => { try { return new URL(result.canonicalUrl).hostname.replace(/^www\./, ""); } catch { return "Unknown domain"; } })(),
+        position: result.position,
+        isNew: result.isNew,
+        outcome,
+        crawlStatus: result.crawlJob?.status ?? null,
+        reason: rejected.map((scholarship) => scholarship.rejectionReason).filter(Boolean).join("; ") || result.crawlJob?.error || null,
+        scholarships: [...candidates, ...rejected],
+      };
+    });
     return {
       id: run.id,
       query: run.searchQuery.query,
@@ -45,7 +69,7 @@ export async function GET() {
       executedAt: run.executedAt,
       trigger: run.trigger,
       requestLabel: run.requestLabel,
-      trackingAvailable: run.resultCount === 0 || run.results.some((result) => Boolean(result.domain || result.crawlJobId)),
+      trackingAvailable,
       resultCount: run.resultCount,
       newUrlCount: run.newUrlCount,
       uniqueDomainCount: run.uniqueDomainCount || domains.size,
@@ -54,6 +78,7 @@ export async function GET() {
       candidateCount: (statusCounts.NEEDS_REVIEW ?? 0) + (statusCounts.VERIFIED ?? 0),
       rejectedCount: statusCounts.REJECTED ?? 0,
       domains: [...domains.values()].sort((left, right) => right.candidates - left.candidates || right.results - left.results || left.domain.localeCompare(right.domain)),
+      results,
     };
   }));
 }
