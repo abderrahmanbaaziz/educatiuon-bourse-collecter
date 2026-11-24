@@ -55,7 +55,7 @@ export async function registerAutomationSchedules() {
   const queue = getAutomationQueue();
   await queue.upsertJobScheduler("twice-daily-dork-discovery", { pattern: config.DISCOVERY_DORK_CRON, tz: config.AUTOMATION_TIMEZONE }, { name: "scheduled-discovery", data: {} });
   await queue.upsertJobScheduler("weekly-source-watch", { pattern: config.SOURCE_WATCH_CRON, tz: config.AUTOMATION_TIMEZONE }, { name: "weekly-watch", data: {} });
-  if (hasTelegramProvider) await queue.upsertJobScheduler("telegram-command-poll", { every: 15_000 }, { name: "telegram-poll", data: {} });
+  if (hasTelegramProvider) await queue.upsertJobScheduler("telegram-command-poll", { every: 60_000 }, { name: "telegram-poll", data: {} });
 }
 
 export async function pingRedis() {

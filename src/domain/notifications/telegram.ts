@@ -47,8 +47,8 @@ export async function sendTelegramMessage(text:string) {
 
 export async function getTelegramUpdates(offset: number) {
   if(!hasTelegramProvider) return [];
-  const params = new URLSearchParams({ offset: String(offset), limit: "20", timeout: "0", allowed_updates: JSON.stringify(["message"]) });
-  const response = await fetch(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/getUpdates?${params}`, { signal: AbortSignal.timeout(12_000) });
+  const params = new URLSearchParams({ offset: String(offset), limit: "20", timeout: "20", allowed_updates: JSON.stringify(["message"]) });
+  const response = await fetch(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/getUpdates?${params}`, { signal: AbortSignal.timeout(30_000) });
   const payload = updatesResponseSchema.parse(await response.json());
   if(!response.ok || !payload.ok) throw new Error(payload.description ?? `Telegram returned HTTP ${response.status}`);
   return payload.result;
