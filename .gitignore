@@ -9,6 +9,7 @@ dist-worker
 *.tsbuildinfo
 playwright/.cache
 server/
-.impeccable/
+.impeccable/*
+!.impeccable/design.json
 study_worldwide_brand_kit (1)/
 Website Logo and Icon Set/

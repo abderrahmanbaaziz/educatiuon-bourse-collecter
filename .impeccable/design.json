@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-24T07:54:10.4800167+01:00",
+  "title": "Design System: Study Worldwide",
+  "extensions": {
+    "colorMeta": {
+      "warm-paper": { "role": "neutral", "displayName": "Warm Paper", "canonical": "#f7f4ed", "tonalRamp": ["color-mix(in oklch, #f7f4ed 25%, black)", "color-mix(in oklch, #f7f4ed 40%, black)", "color-mix(in oklch, #f7f4ed 60%, black)", "color-mix(in oklch, #f7f4ed 80%, black)", "#f7f4ed", "color-mix(in oklch, #f7f4ed 80%, white)", "color-mix(in oklch, #f7f4ed 55%, white)", "color-mix(in oklch, #f7f4ed 25%, white)"] },
+      "working-surface": { "role": "neutral", "displayName": "Working Surface", "canonical": "#ffffff", "tonalRamp": ["#262626", "#4d4d4d", "#737373", "#999999", "#bfbfbf", "#d9d9d9", "#ededed", "#ffffff"] },
+      "muted-surface": { "role": "neutral", "displayName": "Muted Surface", "canonical": "#f5f1e8", "tonalRamp": ["color-mix(in oklch, #f5f1e8 25%, black)", "color-mix(in oklch, #f5f1e8 40%, black)", "color-mix(in oklch, #f5f1e8 60%, black)", "color-mix(in oklch, #f5f1e8 80%, black)", "#f5f1e8", "color-mix(in oklch, #f5f1e8 80%, white)", "color-mix(in oklch, #f5f1e8 55%, white)", "color-mix(in oklch, #f5f1e8 25%, white)"] },
+      "selected-surface": { "role": "neutral", "displayName": "Selected Surface", "canonical": "#f2e9d9", "tonalRamp": ["color-mix(in oklch, #f2e9d9 25%, black)", "color-mix(in oklch, #f2e9d9 40%, black)", "color-mix(in oklch, #f2e9d9 60%, black)", "color-mix(in oklch, #f2e9d9 80%, black)", "#f2e9d9", "color-mix(in oklch, #f2e9d9 80%, white)", "color-mix(in oklch, #f2e9d9 55%, white)", "color-mix(in oklch, #f2e9d9 25%, white)"] },
+      "quiet-border": { "role": "neutral", "displayName": "Quiet Border", "canonical": "#e5ded2", "tonalRamp": ["#332f29", "#564f45", "#7b7163", "#a09687", "#c2b9ac", "#d6cec2", "#e5ded2", "#f5f1eb"] },
+      "strong-border": { "role": "neutral", "displayName": "Strong Border", "canonical": "#cfc4b3", "tonalRamp": ["#302a22", "#51483b", "#736858", "#978b79", "#b7aa97", "#cfc4b3", "#e2dacf", "#f4f0ea"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#1d1c1a", "tonalRamp": ["#1d1c1a", "#34322f", "#514e49", "#716d66", "#938e86", "#b7b2ab", "#dad7d2", "#f4f2ef"] },
+      "secondary-ink": { "role": "neutral", "displayName": "Secondary Ink", "canonical": "#514b43", "tonalRamp": ["#211e1a", "#39342d", "#514b43", "#716960", "#918a81", "#b3ada6", "#d7d3ce", "#f3f1ee"] },
+      "subtle-ink": { "role": "neutral", "displayName": "Subtle Ink", "canonical": "#6d655a", "tonalRamp": ["#251f19", "#494138", "#6d655a", "#898278", "#a7a198", "#c4c0ba", "#dedbd7", "#f5f3f1"] },
+      "brand-ink": { "role": "primary", "displayName": "Brand Ink", "canonical": "#292620", "tonalRamp": ["#1c1915", "#292620", "#484238", "#686157", "#8a8379", "#ada79f", "#d1cdc8", "#f2f0ed"] },
+      "antique-brass": { "role": "secondary", "displayName": "Antique Brass", "canonical": "#ad8d48", "tonalRamp": ["#2b210d", "#493817", "#6a5224", "#8b7035", "#ad8d48", "#c6aa69", "#dfca94", "#f5e8c7"] },
+      "deep-brass": { "role": "secondary", "displayName": "Deep Brass", "canonical": "#7b5c28", "tonalRamp": ["#281c08", "#493411", "#694c1d", "#7b5c28", "#a08149", "#c0a36f", "#dfc99f", "#f5e8cf"] },
+      "brass-tint": { "role": "secondary", "displayName": "Brass Tint", "canonical": "#f5ebd6", "tonalRamp": ["#36290f", "#624b1f", "#8c7037", "#b79b5c", "#dbc582", "#ead9aa", "#f5ebd6", "#fbf7ed"] },
+      "ink-hover": { "role": "primary", "displayName": "Ink Hover", "canonical": "#433d33", "tonalRamp": ["#1d1a15", "#2f2b23", "#433d33", "#655e52", "#888177", "#aba69f", "#d0cdc8", "#f1efec"] },
+      "editorial-link": { "role": "secondary", "displayName": "Editorial Link", "canonical": "#6b4a20", "tonalRamp": ["#241704", "#452c0a", "#6b4a20", "#8b6a3f", "#aa8a64", "#c8ac8b", "#e3d0b7", "#f7edde"] },
+      "success": { "role": "tertiary", "displayName": "Success", "canonical": "#166648", "tonalRamp": ["#06271a", "#0b412e", "#166648", "#36866a", "#5fa88c", "#8bc8af", "#bce4d3", "#e8f3ee"] },
+      "success-tint": { "role": "tertiary", "displayName": "Success Tint", "canonical": "#e8f3ee", "tonalRamp": ["#08291c", "#15513a", "#35775d", "#659d84", "#99c1ad", "#c5dfd2", "#e8f3ee", "#f5faf7"] },
+      "warning": { "role": "tertiary", "displayName": "Warning", "canonical": "#8b5c1c", "tonalRamp": ["#2b1903", "#4f3108", "#714812", "#8b5c1c", "#aa7d3c", "#c99f67", "#e4c694", "#fbf0dc"] },
+      "warning-tint": { "role": "tertiary", "displayName": "Warning Tint", "canonical": "#fbf0dc", "tonalRamp": ["#321d05", "#64400d", "#93671f", "#ba8e42", "#d9b66e", "#ead19f", "#fbf0dc", "#fdf8ef"] },
+      "danger": { "role": "tertiary", "displayName": "Danger", "canonical": "#a4382b", "tonalRamp": ["#330a07", "#5a1711", "#81261e", "#a4382b", "#bf5d50", "#d7897e", "#eab9b2", "#f9e9e6"] },
+      "danger-tint": { "role": "tertiary", "displayName": "Danger Tint", "canonical": "#f9e9e6", "tonalRamp": ["#3b0b08", "#742019", "#a84337", "#ce7469", "#e4a198", "#f0c8c2", "#f9e9e6", "#fdf6f5"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Login titles and compact metric values." },
+      "headline": { "displayName": "Headline", "purpose": "Page titles without hero-scale exaggeration." },
+      "title": { "displayName": "Title", "purpose": "Panel and section headings." },
+      "body": { "displayName": "Body", "purpose": "Default interface copy and dense record content." },
+      "label": { "displayName": "Label", "purpose": "Controls, fields, metadata, and utility context." }
+    },
+    "shadows": [
+      { "name": "mobile-navigation-lift", "value": "0 12px 24px rgba(41, 38, 32, 0.12)", "purpose": "Places the expanded mobile navigation above the workspace." }
+    ],
+    "motion": [
+      { "name": "state-change", "value": "150ms ease-out", "purpose": "Background and color transitions for buttons and navigation." },
+      { "name": "reduced-motion", "value": "0.01ms", "purpose": "Effectively removes transition and animation duration when reduced motion is requested." }
+    ],
+    "breakpoints": [
+      { "name": "workspace-compact", "value": "1024px" },
+      { "name": "mobile-navigation", "value": "768px" },
+      { "name": "phone", "value": "520px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single strongest action in an operational context.",
+      "html": "<button class=\"ds-btn-primary\">Save and crawl</button>",
+      "css": ".ds-btn-primary { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 8px 13px; border: 1px solid var(--accent); border-radius: var(--radius-md); background: var(--accent); color: #fff; font: 650 13px/1.2 Segoe UI, ui-sans-serif, system-ui, sans-serif; cursor: pointer; transition: background-color 150ms ease-out, border-color 150ms ease-out; } .ds-btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); } .ds-btn-primary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .ds-btn-primary:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "A neutral supporting action that stays subordinate to the primary action.",
+      "html": "<button class=\"ds-btn-secondary\">Reopen</button>",
+      "css": ".ds-btn-secondary { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 8px 13px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--surface); color: var(--text); font: 650 13px/1.2 Segoe UI, ui-sans-serif, system-ui, sans-serif; cursor: pointer; transition: background-color 150ms ease-out, border-color 150ms ease-out; } .ds-btn-secondary:hover { background: var(--surface-muted); border-color: var(--text-subtle); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .ds-btn-secondary:active { background: var(--surface-selected); }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "A persistent-label field for trusted operational input.",
+      "html": "<label class=\"ds-field-label\" for=\"ds-provider\">Provider name<input class=\"ds-field\" id=\"ds-provider\" placeholder=\"University or programme\"></label>",
+      "css": ".ds-field-label { display: grid; gap: 6px; color: var(--text-secondary); font: 600 13px/1.2 Segoe UI, ui-sans-serif, system-ui, sans-serif; } .ds-field { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--surface); color: var(--text); font: 400 15px/1.5 Segoe UI, ui-sans-serif, system-ui, sans-serif; caret-color: var(--brand-gold-dark); } .ds-field:hover { border-color: var(--text-subtle); } .ds-field:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .ds-field::placeholder { color: #777067; }"
+    },
+    {
+      "name": "Active Navigation Item",
+      "kind": "nav",
+      "refersTo": "nav-active",
+      "description": "The quiet cream route marker used in desktop and mobile navigation.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Example navigation\"><a class=\"ds-nav-item\" href=\"#\">Overview</a><a class=\"ds-nav-item ds-nav-active\" href=\"#\" aria-current=\"page\">Scholarships</a></nav>",
+      "css": ".ds-nav { width: 216px; display: grid; gap: 2px; padding: 12px; background: var(--surface); } .ds-nav-item { min-height: 40px; display: flex; align-items: center; padding: 8px 12px; border-radius: var(--radius-md); color: var(--text-secondary); text-decoration: none; font: 500 14px/1.2 Segoe UI, ui-sans-serif, system-ui, sans-serif; transition: background-color 150ms ease-out, color 150ms ease-out; } .ds-nav-item:hover { background: var(--surface-muted); color: var(--text); } .ds-nav-item:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .ds-nav-active, .ds-nav-active:hover { background: var(--surface-selected); color: var(--text); font-weight: 650; }"
+    },
+    {
+      "name": "Success Status Badge",
+      "kind": "chip",
+      "refersTo": "status-badge",
+      "description": "A compact text-first marker for healthy or completed workflow state.",
+      "html": "<span class=\"ds-badge-success\">Succeeded</span>",
+      "css": ".ds-badge-success { min-height: 24px; display: inline-flex; align-items: center; padding: 3px 7px; border: 1px solid #b9d9cb; border-radius: var(--radius-sm); background: var(--success-bg); color: var(--success); font: 700 11px/1.2 Segoe UI, ui-sans-serif, system-ui, sans-serif; letter-spacing: 0.02em; } .ds-badge-success:hover { border-color: var(--success); } .ds-badge-success:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }"
+    },
+    {
+      "name": "Operational Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "A flat bordered container for related records, forms, or status details.",
+      "html": "<section class=\"ds-panel\"><h2>Recent crawl activity</h2><p>Live records remain visually stronger than the container.</p></section>",
+      "css": ".ds-panel { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); color: var(--text); font: 400 15px/1.5 Segoe UI, ui-sans-serif, system-ui, sans-serif; } .ds-panel h2 { margin: 0; padding: 16px 18px; border-bottom: 1px solid var(--border); font-size: 17px; line-height: 1.3; font-weight: 650; } .ds-panel p { margin: 0; padding: 16px 18px; color: var(--text-secondary); } .ds-panel:hover { border-color: var(--border-strong); } .ds-panel:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }"
+    },
+    {
+      "name": "Metric Strip",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "A single segmented surface for compact live operational totals.",
+      "html": "<div class=\"ds-metrics\"><div class=\"ds-metric\"><span>Total scholarships</span><strong>128</strong><small>Live database</small></div><div class=\"ds-metric\"><span>Verified</span><strong>47</strong><small>Live database</small></div></div>",
+      "css": ".ds-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); font-family: Segoe UI, ui-sans-serif, system-ui, sans-serif; } .ds-metric { min-width: 0; padding: 16px 18px; border-right: 1px solid var(--border); } .ds-metric:last-child { border-right: 0; } .ds-metric span { display: block; color: var(--text-secondary); font-size: 13px; } .ds-metric strong { display: block; margin-top: 4px; color: var(--text); font-size: 26px; line-height: 1.2; font-weight: 650; font-variant-numeric: tabular-nums; } .ds-metric small { display: block; margin-top: 5px; color: var(--text-subtle); font-size: 12px; } .ds-metric:hover { background: #fbfaf7; } .ds-metric:focus-within { outline: 2px solid var(--focus); outline-offset: -2px; }"
+    },
+    {
+      "name": "Data Table",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "The core dense-record pattern with sticky muted headers and restrained row feedback.",
+      "html": "<div class=\"ds-table-wrap\"><table class=\"ds-table\"><thead><tr><th>Source</th><th>Status</th><th>Pages</th></tr></thead><tbody><tr><td>Example University</td><td><span class=\"ds-table-badge\">Succeeded</span></td><td>24</td></tr></tbody></table></div>",
+      "css": ".ds-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); } .ds-table { width: 100%; min-width: 480px; border-collapse: collapse; color: var(--text-secondary); font: 400 14px/1.5 Segoe UI, ui-sans-serif, system-ui, sans-serif; } .ds-table th { padding: 10px 12px; border-bottom: 1px solid var(--border-strong); background: var(--surface-muted); text-align: left; font-size: 12px; font-weight: 650; letter-spacing: 0.015em; } .ds-table td { min-height: 46px; padding: 10px 12px; border-bottom: 1px solid var(--border); } .ds-table td:first-child { color: var(--text); font-weight: 540; } .ds-table td:last-child { font-variant-numeric: tabular-nums; } .ds-table tbody tr:hover td { background: #fbfaf7; } .ds-table tbody tr:focus-within td { outline: 2px solid var(--focus); outline-offset: -2px; } .ds-table-badge { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 7px; border: 1px solid #b9d9cb; border-radius: var(--radius-sm); background: var(--success-bg); color: var(--success); font-size: 11px; font-weight: 700; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Academic Operations Ledger",
+    "overview": "Study Worldwide treats scholarship evidence as the primary material. Warm paper, white working surfaces, near-black ink, and small antique-brass details give the workspace the authority of an established international academic organization without compromising the speed or density of professional operations software.\n\nThe interface is editorial at the brand boundary and restrained inside workflows. The supplied Study Worldwide artwork anchors the shell; records, crawl state, provenance, and explicit human review then take visual priority. Decoration never competes with operational truth, and uncertainty remains visible rather than being polished into false confidence.",
+    "keyCharacteristics": [
+      "Warm, high-trust academic character grounded in the supplied brand artwork.",
+      "Dense, full-width working surfaces with compact controls and visible evidence.",
+      "Flat white panels, fine warm-gray separators, and minimal elevation.",
+      "Near-black actions, rare brass detail, and status colors reserved for meaning.",
+      "Desktop-first operations with essential statuses, page counts, and actions preserved on mobile."
+    ],
+    "rules": [
+      { "name": "The Rare Brass Rule", "body": "Brass identifies the brand and guides attention; it never floods working surfaces or substitutes for semantic status color.", "section": "colors" },
+      { "name": "The Meaning Before Hue Rule", "body": "Every status color is paired with a text label, and the label remains visible at every supported viewport.", "section": "colors" },
+      { "name": "The Artwork Owns the Serif Rule", "body": "Preserve the classical lettering inside the supplied logo; do not manufacture a display-serif substitute in the operational UI.", "section": "typography" },
+      { "name": "The Numbers Must Scan Rule", "body": "Totals, dates, durations, and counts use tabular numerals and remain visually compact.", "section": "typography" },
+      { "name": "The Data Uses the Width Rule", "body": "Tables and records expand into available workspace width; they are never constrained to a marketing-style narrow column.", "section": "layout" },
+      { "name": "The Mobile Evidence Rule", "body": "Responsive reduction may reflow or scroll secondary structure, but crawl status, page counts, and primary actions remain available.", "section": "layout" },
+      { "name": "The Flat-by-Default Rule", "body": "Resting panels and metric strips use borders and tonal contrast; shadows are reserved for a surface that truly overlays another surface.", "section": "elevation" },
+      { "name": "The Shared Container Rule", "body": "Related metrics and records share a boundary; do not wrap every item in its own rounded card.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do make evidence, provenance, review state, and crawl health more prominent than their containers.",
+      "Do use the supplied Study Worldwide logo assets at their intended desktop and mobile sizes.",
+      "Do keep working surfaces flat, opaque, compact, and separated by warm one-pixel rules.",
+      "Do preserve status labels, crawl page counts, keyboard focus, and real actions at narrow widths.",
+      "Do use tabular numerals and consistent, unambiguous date formatting for operational data.",
+      "Do reserve semantic green, amber, and red for actual system meaning."
+    ],
+    "donts": [
+      "Don't use blue or purple accents, gradients, glass effects, glows, or generic AI-sparkle styling.",
+      "Don't convert repeatable records or metrics into oversized rounded card galleries.",
+      "Don't use antique brass as a default button fill or as small text on white.",
+      "Don't hide essential status text, page counts, or critical actions to make mobile layouts look cleaner.",
+      "Don't invent data, modules, statuses, or controls to make a screen appear more complete.",
+      "Don't imitate the logo's classical serif lettering with decorative type throughout the working UI."
+    ]
+  }
+}
