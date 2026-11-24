@@ -46,7 +46,7 @@ export function Dashboard() {
     <div className="split">
       <section className="panel">
         <h2>Recent crawl activity</h2>
-        {data?.recentJobs.length ? <div className="table-wrap"><table className="table">
+        {data?.recentJobs.length ? <div className="table-wrap"><table className="table crawl-table">
           <thead><tr><th>Source</th><th>Status</th><th>Pages</th></tr></thead>
           <tbody>{data.recentJobs.map((job) => <tr key={job.id}>
             <td>{job.source?.providerName ?? new URL(job.rootUrl).hostname}</td>
