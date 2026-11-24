@@ -11,6 +11,13 @@ export function needsBrowserRendering(html: string, readableText: string) {
     || ((html.match(/<script\b/gi)?.length ?? 0) >= 5 && readableText.length < 200);
 }
 
+export function needsBrowserInspection(html: string, readableText: string, links: Array<{ text: string; url: string }>) {
+  if (needsBrowserRendering(html, readableText)) return true;
+  const scholarshipPage = /scholar|bourse|fellowship|grant|funding|منح/i.test(`${readableText} ${html}`);
+  const hasApplyLink = links.some((link) => /apply|application|candidature|postuler|register|portal|التقديم|التسجيل/i.test(`${link.text} ${link.url}`));
+  return scholarshipPage && !hasApplyLink && (/<form\b/i.test(html) || /<script\b/i.test(html));
+}
+
 export async function renderPublicPage(input: string) {
   const target = await assertPublicUrl(input);
   const browser = await chromium.launch({ headless: true });

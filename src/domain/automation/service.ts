@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { config, hasSearchProvider, hasTelegramProvider } from "@/lib/config";
 import { enqueueAutomation } from "@/lib/queue";
-import { buildTargetedDorks, generateDomainDorks, rotateDorks } from "@/domain/discovery/dorks";
+import { buildAlgeriaDiscoveryDorks, buildTargetedDorks, generateDomainDorks, rotateDorks } from "@/domain/discovery/dorks";
 import { runSerpSearch } from "@/domain/search/serpapi";
 import { startSourceCrawl } from "@/domain/sources/service";
 import { escapeTelegramHtml, getTelegramUpdates, sendTelegramMessage, telegramUpdateSchema } from "@/domain/notifications/telegram";
@@ -37,15 +37,19 @@ export async function runScheduledDiscovery() {
   const cursor = await settingValue("automation.dorkCursor", 0);
   const { selected, nextCursor } = rotateDorks(pool, Number(cursor) || 0, config.DISCOVERY_DORKS_PER_RUN);
   await putSetting("automation.dorkCursor", nextCursor, "Round-robin cursor for scheduled domain dorks");
+  const globalCursor = await settingValue("automation.globalDorkCursor", 0);
+  const globalRotation = rotateDorks(buildAlgeriaDiscoveryDorks(), Number(globalCursor) || 0, config.DISCOVERY_GLOBAL_DORKS_PER_RUN);
+  await putSetting("automation.globalDorkCursor", globalRotation.nextCursor, "Round-robin cursor for broad Algeria discovery dorks");
   const results: Array<{ query: string; ok: boolean; result?: unknown; error?: string }> = [];
-  for (const dork of selected) {
+  const globalDorks = globalRotation.selected.map((query) => ({ query, language: /[\u0600-\u06ff]/.test(query) ? "ar" : query.includes("Algérie") ? "fr" : "en", sourceId: undefined as string | undefined }));
+  for (const dork of [...selected, ...globalDorks]) {
     try {
       results.push({ query: dork.query, ok: true, result: await runSerpSearch(dork.query, dork.language, dork.sourceId) });
     } catch (error) {
       results.push({ query: dork.query, ok: false, error: error instanceof Error ? error.message : String(error) });
     }
   }
-  return { skipped: false, domainCount: pool.length, executed: selected.length, succeeded: results.filter((item) => item.ok).length, failed: results.filter((item) => !item.ok).length, results };
+  return { skipped: false, domainCount: pool.length, executed: results.length, succeeded: results.filter((item) => item.ok).length, failed: results.filter((item) => !item.ok).length, results };
 }
 
 export async function runWeeklySourceWatch() {

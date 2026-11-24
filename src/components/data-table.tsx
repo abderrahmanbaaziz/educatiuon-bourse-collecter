@@ -21,6 +21,7 @@ export function RemoteTable({ endpoint, kind }: { endpoint: string; kind: "schol
   const [items, setItems] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [selectedScholarshipId, setSelectedScholarshipId] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(endpoint)
@@ -28,6 +29,16 @@ export function RemoteTable({ endpoint, kind }: { endpoint: string; kind: "schol
       .then(setItems)
       .catch((cause) => setError(cause.message));
   }, [endpoint]);
+
+  async function stopCrawl(id: string) {
+    if (!window.confirm("Stop this crawl now? Remaining pages will be skipped.")) return;
+    setBusyId(id);
+    const response = await fetch(`/api/crawl-jobs/${id}/cancel`, { method: "POST" });
+    const result = await response.json();
+    if (response.ok) setItems((current) => current.map((item) => item.id === id ? { ...item, status: "CANCELLED", error: result.error } : item));
+    else setError(result.error ?? "Could not stop crawl");
+    setBusyId(null);
+  }
 
   if (error) return <div className="notice">{error}</div>;
   if (!items.length) return <div className="panel empty">No records yet.</div>;
@@ -44,9 +55,9 @@ export function RemoteTable({ endpoint, kind }: { endpoint: string; kind: "schol
   </table></div></section><ScholarshipReviewDialog scholarshipId={selectedScholarshipId} onClose={() => setSelectedScholarshipId(null)} onStatusChange={(id, status) => setItems((current) => current.map((item) => item.id === id ? { ...item, status } : item))}/></>;
 
   if (kind === "crawls") return <section className="panel"><div className="table-wrap"><table className="table">
-    <thead><tr><th>Source</th><th>Root URL</th><th>Status</th><th>Visited</th><th>Frontier</th><th>Error</th></tr></thead>
+    <thead><tr><th>Source</th><th>Root URL</th><th>Status</th><th>Visited</th><th>Frontier</th><th>Error</th><th>Action</th></tr></thead>
     <tbody>{items.map((item) => <tr key={item.id}>
-      <td>{item.source?.providerName ?? "—"}</td><td>{item.rootUrl}</td><td><span className={badgeClass(item.status)}>{statusLabel(item.status)}</span></td><td>{item.visitedCount}</td><td>{item._count.frontier}</td><td>{item.error ?? "—"}</td>
+      <td>{item.source?.providerName ?? "—"}</td><td><a href={item.rootUrl} target="_blank" rel="noreferrer">{item.rootUrl}</a></td><td><span className={badgeClass(item.status)}>{statusLabel(item.status)}</span></td><td>{item.visitedCount}</td><td>{item._count.frontier}</td><td>{item.error ?? "—"}</td><td>{["QUEUED", "ACTIVE", "PAUSED"].includes(item.status) ? <button className="button button-danger" disabled={busyId === item.id} onClick={() => void stopCrawl(item.id)}>{busyId === item.id ? "Stopping…" : "Stop"}</button> : "—"}</td>
     </tr>)}</tbody>
   </table></div></section>;
 

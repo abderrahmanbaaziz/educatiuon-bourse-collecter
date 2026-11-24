@@ -45,3 +45,30 @@ export async function startSourceCrawl(sourceId: string) {
   await enqueueCrawl(crawlJob.id);
   return crawlJob;
 }
+
+export async function setSourceEnabled(sourceId: string, enabled: boolean) {
+  const source = await db.source.findUnique({ where: { id: sourceId } });
+  if (!source) throw new Error("Source not found");
+  return db.$transaction(async (tx) => {
+    const updated = await tx.source.update({ where: { id: sourceId }, data: { enabled } });
+    if (!enabled) {
+      const jobs = await tx.crawlJob.findMany({ where: { sourceId, status: { in: ["QUEUED", "ACTIVE"] } }, select: { id: true } });
+      const ids = jobs.map((job) => job.id);
+      if (ids.length) {
+        await tx.crawlJob.updateMany({ where: { id: { in: ids } }, data: { status: "CANCELLED", finishedAt: new Date(), error: "Website disabled by administrator" } });
+        await tx.crawlFrontier.updateMany({ where: { crawlJobId: { in: ids }, status: { in: ["PENDING", "PROCESSING"] } }, data: { status: "SKIPPED", lastError: "Website disabled by administrator" } });
+      }
+    }
+    return updated;
+  });
+}
+
+export async function cancelCrawlJob(crawlJobId: string) {
+  const job = await db.crawlJob.findUnique({ where: { id: crawlJobId } });
+  if (!job) throw new Error("Crawl job not found");
+  if (!["QUEUED", "ACTIVE", "PAUSED"].includes(job.status)) throw new Error("This crawl is no longer running");
+  return db.$transaction(async (tx) => {
+    await tx.crawlFrontier.updateMany({ where: { crawlJobId, status: { in: ["PENDING", "PROCESSING"] } }, data: { status: "SKIPPED", lastError: "Stopped by administrator" } });
+    return tx.crawlJob.update({ where: { id: crawlJobId }, data: { status: "CANCELLED", finishedAt: new Date(), error: "Stopped by administrator" } });
+  });
+}

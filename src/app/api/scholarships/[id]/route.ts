@@ -35,6 +35,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       evidenceFields: scholarship.evidence.map((item) => item.field),
       sourceUrl: scholarship.sourceUrl,
       applicationUrl: scholarship.applicationUrl,
+      algeriaEligibility: scholarship.algeriaEligibility,
+      opportunityType: scholarship.opportunityType,
+      applicationStatus: scholarship.applicationStatus,
+      directApplicationVerified: scholarship.directApplicationVerified,
     });
 
     return NextResponse.json({ ...scholarship, verification });

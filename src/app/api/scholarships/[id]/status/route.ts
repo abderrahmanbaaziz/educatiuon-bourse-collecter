@@ -21,7 +21,7 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
     if(input.trustSource && input.status !== "VERIFIED")return NextResponse.json({error:"A source can only be trusted during verification"},{status:400});
     if(input.status==="VERIFIED"){
       const effectiveTrustLevel=input.trustSource ? "TRUSTED" : scholarship.source?.trustLevel??null;
-      const policy=evaluateVerification({currentStatus:scholarship.status,trustLevel:effectiveTrustLevel,evidenceFields:scholarship.evidence.map((item)=>item.field),sourceUrl:scholarship.sourceUrl,applicationUrl:scholarship.applicationUrl});
+      const policy=evaluateVerification({currentStatus:scholarship.status,trustLevel:effectiveTrustLevel,evidenceFields:scholarship.evidence.map((item)=>item.field),sourceUrl:scholarship.sourceUrl,applicationUrl:scholarship.applicationUrl,algeriaEligibility:scholarship.algeriaEligibility,opportunityType:scholarship.opportunityType,applicationStatus:scholarship.applicationStatus,directApplicationVerified:scholarship.directApplicationVerified});
       if(!policy.allowed)return NextResponse.json({error:"Verification requirements are not met",reasons:policy.reasons},{status:422});
     }
     const updated=await db.$transaction(async(tx)=>{

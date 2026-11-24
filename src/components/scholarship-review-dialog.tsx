@@ -35,6 +35,12 @@ type ScholarshipDetail = {
   requiredDocuments: string[];
   applicationProcess: string | null;
   applicationUrl: string | null;
+  algeriaEligibility: string;
+  eligibilityReason: string | null;
+  opportunityType: string;
+  applicationStatus: string;
+  directApplicationVerified: boolean;
+  rejectionReason: string | null;
   sourceUrl: string;
   status: string;
   evidence: Evidence[];
@@ -209,7 +215,7 @@ export function ScholarshipReviewDialog({ scholarshipId, onClose, onStatusChange
         <div className="review-link-bar">
           {applicationUrl && <a className="button" href={applicationUrl} target="_blank" rel="noreferrer">Open application page</a>}
           {sourceUrl && <a className="button button-secondary" href={sourceUrl} target="_blank" rel="noreferrer">Open scholarship source</a>}
-          {!applicationUrl && <span className="review-link-note">A separate application link was not extracted. Use the scholarship source while reviewing registration instructions.</span>}
+          {!applicationUrl && <span className="review-link-note">Rejected by the strict gate: no validated direct application form or portal was found.</span>}
         </div>
 
         <div className="review-scroll">
@@ -224,6 +230,11 @@ export function ScholarshipReviewDialog({ scholarshipId, onClose, onStatusChange
               <Detail label="Academic year">{detail.academicYear}</Detail>
               <Detail label="Eligible nationalities">{detail.eligibleNationalities.join(", ")}</Detail>
               <Detail label="Fields of study">{detail.academicFields.join(", ")}</Detail>
+              <Detail label="Algeria eligibility">{statusLabel(detail.algeriaEligibility)}{detail.eligibilityReason ? ` — ${detail.eligibilityReason}` : ""}</Detail>
+              <Detail label="Opportunity type">{statusLabel(detail.opportunityType)}</Detail>
+              <Detail label="Application status">{statusLabel(detail.applicationStatus)}</Detail>
+              <Detail label="Direct apply link">{detail.directApplicationVerified ? "Verified" : "Not verified"}</Detail>
+              {detail.rejectionReason && <Detail label="Strict gate result">{detail.rejectionReason}</Detail>}
             </dl>
           </section>
 

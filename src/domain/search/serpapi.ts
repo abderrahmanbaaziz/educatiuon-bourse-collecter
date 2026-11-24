@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { config } from "@/lib/config";
-import { canonicalizeUrl } from "@/domain/crawler/url-policy";
+import { assertPublicUrl, canonicalizeUrl } from "@/domain/crawler/url-policy";
 import { enqueueCrawl } from "@/lib/queue";
 import { sameSite } from "@/domain/crawler/url-policy";
 
@@ -36,7 +36,7 @@ export async function runSerpSearch(query: string, language = "en", sourceId?: s
   const searchQuery = await db.searchQuery.upsert({ where: { query_language: { query, language } }, update: {}, create: { query, language } });
   const run = await db.searchRun.create({ data: { searchQueryId: searchQuery.id, account: account.name, status: "RUNNING" } });
   try {
-    const params = new URLSearchParams({ engine: "google", q: query, hl: language, api_key: account.key, output: "json" });
+    const params = new URLSearchParams({ engine: "google", q: query, hl: language, num: "100", api_key: account.key, output: "json" });
     const response = await fetch(`https://serpapi.com/search?${params}`, { signal: AbortSignal.timeout(45000) });
     if (!response.ok) throw new Error(`SerpAPI returned HTTP ${response.status}`);
     const payload = responseSchema.parse(await response.json());
@@ -52,12 +52,33 @@ export async function runSerpSearch(query: string, language = "en", sourceId?: s
       await tx.searchRun.update({ where: { id: run.id }, data: { status: "SUCCEEDED", resultCount: normalized.length, newUrlCount: newUrls } });
       await tx.aPIUsage.create({ data: { provider: "serpapi", account: account.name, operation: "google_search", billingMonth: billingMonth() } });
     });
-    const source = sourceId ? await db.source.findUnique({ where: { id: sourceId }, select: { scholarshipUrl: true } }) : null;
-    for (const result of normalized.slice(0, 10)) {
+    const source = sourceId ? await db.source.findUnique({ where: { id: sourceId }, select: { id: true, scholarshipUrl: true, enabled: true } }) : null;
+    const knownSources = await db.source.findMany({ select: { id: true, scholarshipUrl: true, enabled: true } });
+    for (const result of normalized.slice(0, config.DISCOVERY_RESULTS_PER_QUERY)) {
       const existing = await db.crawlJob.findFirst({ where: { rootUrl: result.canonicalUrl, status: { in: ["QUEUED", "ACTIVE", "SUCCEEDED"] } } });
       if (existing) continue;
-      const linkedSourceId = source && sameSite(source.scholarshipUrl, result.canonicalUrl) ? sourceId : undefined;
-      const crawl = await db.crawlJob.create({ data: { sourceId: linkedSourceId, rootUrl: result.canonicalUrl, maxDepth: config.CRAWLER_MAX_DEPTH, pageLimit: config.CRAWLER_DEFAULT_DOMAIN_PAGE_LIMIT, frontier: { create: { url: result.canonicalUrl, canonicalUrl: result.canonicalUrl, depth: 0 } } } });
+      let linked = source && sameSite(source.scholarshipUrl, result.canonicalUrl) ? source : knownSources.find((item) => sameSite(item.scholarshipUrl, result.canonicalUrl));
+      if (linked?.enabled === false) continue;
+      if (!linked) {
+        try {
+          const safe = await assertPublicUrl(result.canonicalUrl);
+          const created = await db.source.create({ data: {
+            providerName: (result.title?.trim() || safe.hostname).slice(0, 200),
+            homepage: safe.origin,
+            scholarshipUrl: result.canonicalUrl,
+            canonicalUrl: result.canonicalUrl,
+            category: "OTHER",
+            trustLevel: "UNVERIFIED",
+            priority: 40,
+            notes: "Automatically discovered by an Algeria-focused scheduled search.",
+          }, select: { id: true, scholarshipUrl: true, enabled: true } });
+          knownSources.push(created); linked = created;
+        } catch {
+          linked = knownSources.find((item) => sameSite(item.scholarshipUrl, result.canonicalUrl));
+        }
+      }
+      if (!linked?.enabled) continue;
+      const crawl = await db.crawlJob.create({ data: { sourceId: linked.id, rootUrl: result.canonicalUrl, maxDepth: config.CRAWLER_MAX_DEPTH, pageLimit: config.CRAWLER_DEFAULT_DOMAIN_PAGE_LIMIT, frontier: { create: { url: result.canonicalUrl, canonicalUrl: result.canonicalUrl, depth: 0 } } } });
       await enqueueCrawl(crawl.id);
     }
     return { id: run.id, account: account.name, resultCount: normalized.length, newUrlCount: newUrls };

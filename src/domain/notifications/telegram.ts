@@ -19,7 +19,7 @@ const updatesResponseSchema = z.object({
 export function escapeTelegramHtml(value:string) { return value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function escapeTelegramAttribute(value:string) { return escapeTelegramHtml(value).replace(/"/g,"&quot;"); }
 
-export function formatScholarshipMessage(scholarship:{title:string;provider:string|null;institution:string|null;hostCountry:string|null;degreeLevels:string[];fundingCategory:string;deadline:Date|null;eligibleNationalities:string[];applicationUrl:string|null;sourceUrl:string}) {
+export function formatScholarshipMessage(scholarship:{title:string;provider:string|null;institution:string|null;hostCountry:string|null;degreeLevels:string[];fundingCategory:string;deadline:Date|null;eligibleNationalities:string[];applicationUrl:string|null;sourceUrl:string;algeriaEligibility?:string}) {
   const lines=[`<b>New verified scholarship</b>`,``,`<b>${escapeTelegramHtml(scholarship.title)}</b>`];
   if(scholarship.provider||scholarship.institution)lines.push(escapeTelegramHtml(scholarship.provider??scholarship.institution!));
   if(scholarship.hostCountry)lines.push(`Host country: ${escapeTelegramHtml(scholarship.hostCountry)}`);
@@ -27,11 +27,12 @@ export function formatScholarshipMessage(scholarship:{title:string;provider:stri
   lines.push(`Funding: ${escapeTelegramHtml(scholarship.fundingCategory.toLowerCase())}`);
   if(scholarship.deadline)lines.push(`Deadline: ${scholarship.deadline.toISOString().slice(0,10)}`);
   if(scholarship.eligibleNationalities.length)lines.push(`Eligibility listed: ${escapeTelegramHtml(scholarship.eligibleNationalities.slice(0,8).join(", "))}`);
+  if(scholarship.algeriaEligibility==="CONFIRMED")lines.push("Algeria eligibility: confirmed from page evidence");
   let link=scholarship.sourceUrl;try{const candidate=new URL(scholarship.applicationUrl??scholarship.sourceUrl);if(["http:","https:"].includes(candidate.protocol))link=candidate.toString()}catch{/* retain the crawler-validated source URL */}lines.push(``,`<a href="${escapeTelegramAttribute(link)}">Official details / application</a>`);
   return lines.join("\n").slice(0,4096);
 }
 
-export function formatCandidateMessage(scholarship:{title:string;provider:string|null;institution:string|null;hostCountry:string|null;degreeLevels:string[];fundingCategory:string;deadline:Date|null;eligibleNationalities:string[];applicationUrl:string|null;sourceUrl:string}) {
+export function formatCandidateMessage(scholarship:{title:string;provider:string|null;institution:string|null;hostCountry:string|null;degreeLevels:string[];fundingCategory:string;deadline:Date|null;eligibleNationalities:string[];applicationUrl:string|null;sourceUrl:string;algeriaEligibility?:string}) {
   return formatScholarshipMessage(scholarship).replace("<b>New verified scholarship</b>", "<b>New scholarship candidate</b>\nNeeds dashboard review");
 }
 

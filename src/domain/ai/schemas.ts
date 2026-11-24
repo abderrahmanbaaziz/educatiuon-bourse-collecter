@@ -13,6 +13,10 @@ export const aiDecisionSchema = z.object({
 const nullableText = z.string().nullable();
 export const scholarshipExtractionSchema = z.object({
   title: z.string().min(2), provider: nullableText, institution: nullableText, host_country: nullableText,
+  opportunity_type: z.enum(["SCHOLARSHIP", "INVITATION", "CONFERENCE", "TRAINING", "EXCHANGE_NOTICE", "OTHER", "UNKNOWN"]),
+  algeria_eligibility: z.enum(["CONFIRMED", "NOT_ELIGIBLE", "UNKNOWN"]), algeria_eligibility_reason: nullableText,
+  application_status: z.enum(["OPEN", "UPCOMING", "CLOSED", "UNKNOWN"]),
+  application_link_type: z.enum(["DIRECT_APPLY", "DETAILS_ONLY", "NONE"]),
   eligible_nationalities: z.array(z.string()), degree_levels: z.array(z.string()), academic_fields: z.array(z.string()),
   funding_category: z.enum(["FULL", "PARTIAL", "UNKNOWN"]), tuition_coverage: nullableText, monthly_stipend: nullableText,
   accommodation: nullableText, travel_allowance: nullableText, health_insurance: nullableText,

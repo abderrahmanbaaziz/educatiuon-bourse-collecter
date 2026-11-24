@@ -95,6 +95,7 @@ label { display: grid; gap: 6px; color: var(--text-secondary); font-size: 13px; 
 .form-grid .wide { grid-column: 1 / -1; }
 .form-action { display: flex; align-items: center; gap: 12px; }
 .inline-message { color: var(--text-secondary); font-size: 13px; font-weight: 400; }
+.source-actions { display: flex; flex-wrap: wrap; gap: 8px; min-width: 220px; }
 .form-submit { align-self: end; }
 .form-message { margin: 0 18px 18px !important; padding: 10px 12px !important; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-muted); color: var(--text-secondary); font-size: 13px; }
 .panel-actions { display: flex; align-items: center; gap: 12px; padding: 16px 18px; }

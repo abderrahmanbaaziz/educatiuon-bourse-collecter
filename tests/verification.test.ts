@@ -1,2 +1,15 @@
-import { describe,expect,it } from "vitest";import{evaluateVerification}from"@/domain/scholarships/verification";
-describe("verification policy",()=>{it("accepts trusted records with identity and critical evidence",()=>expect(evaluateVerification({currentStatus:"NEEDS_REVIEW",trustLevel:"OFFICIAL",evidenceFields:["title","deadline"],sourceUrl:"https://uni.example/grant",applicationUrl:"https://uni.example/apply"}).allowed).toBe(true));it("does not treat AI confidence as verification evidence",()=>{const result=evaluateVerification({currentStatus:"NEEDS_REVIEW",trustLevel:"UNVERIFIED",evidenceFields:[],sourceUrl:"https://blog.example/grant",applicationUrl:null});expect(result.allowed).toBe(false);expect(result.reasons.length).toBeGreaterThan(1)});it("flags cross-host application links",()=>expect(evaluateVerification({currentStatus:"NEEDS_REVIEW",trustLevel:"TRUSTED",evidenceFields:["title","eligibility"],sourceUrl:"https://uni.example/grant",applicationUrl:"https://evil.example/apply"}).allowed).toBe(false))});
+import { describe, expect, it } from "vitest";
+import { evaluateVerification, type VerificationFacts } from "@/domain/scholarships/verification";
+
+const valid: VerificationFacts = {
+  currentStatus: "NEEDS_REVIEW", trustLevel: "OFFICIAL", evidenceFields: ["title", "eligibility", "application_url"],
+  sourceUrl: "https://uni.example/grant", applicationUrl: "https://uni.example/apply", algeriaEligibility: "CONFIRMED",
+  opportunityType: "SCHOLARSHIP", applicationStatus: "OPEN", directApplicationVerified: true,
+};
+
+describe("verification policy", () => {
+  it("accepts a strict actionable Algeria scholarship", () => expect(evaluateVerification(valid).allowed).toBe(true));
+  it("rejects generic international eligibility", () => expect(evaluateVerification({ ...valid, algeriaEligibility: "UNKNOWN" }).allowed).toBe(false));
+  it("rejects invitations and details-only links", () => expect(evaluateVerification({ ...valid, opportunityType: "INVITATION", directApplicationVerified: false }).allowed).toBe(false));
+  it("flags unsupported cross-host application links", () => expect(evaluateVerification({ ...valid, evidenceFields: ["title", "eligibility"], applicationUrl: "https://evil.example/apply" }).allowed).toBe(false));
+});

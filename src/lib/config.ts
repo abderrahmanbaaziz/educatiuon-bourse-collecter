@@ -24,6 +24,8 @@ const envSchema = z.object({
   SOURCE_WATCH_CRON: z.string().min(5).default("0 3 * * 0"),
   AUTOMATION_TIMEZONE: z.string().min(1).default("Africa/Lagos"),
   DISCOVERY_DORKS_PER_RUN: z.coerce.number().int().min(1).max(100).default(6),
+  DISCOVERY_GLOBAL_DORKS_PER_RUN: z.coerce.number().int().min(1).max(20).default(4),
+  DISCOVERY_RESULTS_PER_QUERY: z.coerce.number().int().min(1).max(100).default(30),
   TELEGRAM_DISCOVERY_COOLDOWN_SECONDS: z.coerce.number().int().min(10).max(86400).default(300),
   TELEGRAM_BOT_TOKEN: z.preprocess((value) => value === "" ? undefined : value, z.string().min(20).optional()),
   TELEGRAM_CHAT_ID: z.preprocess((value) => value === "" ? undefined : value, z.string().min(1).optional()),

@@ -6,12 +6,13 @@ import { extractHtml, rankRelevantLinks, type ExtractedPage } from "./extract";
 import { fetchPublicPage } from "./fetch-page";
 import { canonicalizeUrl, sameSite } from "./url-policy";
 import { extractXml, isXmlDocument } from "./xml";
-import { needsBrowserRendering, renderPublicPage } from "./render-page";
+import { needsBrowserInspection, renderPublicPage } from "./render-page";
 import { invokeStructuredAI } from "../ai/client";
 import { aiDecisionSchema, scholarshipExtractionSchema, validateSelectedLinks, type ScholarshipExtraction } from "../ai/schemas";
 import { extractionPrompt, navigationPrompt } from "../ai/prompts";
 import { scheduleCrawlFailureNotification } from "../notifications/service";
 import { scheduleNewCandidateNotification } from "../notifications/service";
+import { evaluateAlgeriaGate } from "../scholarships/algeria-gate";
 
 const scholarshipTerms = /scholar|bourse|fellowship|grant|funding|erasmus/i;
 
@@ -34,7 +35,8 @@ function safeDate(input: string | null): Date | null {
 
 function normalizeTitle(title: string) { return title.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, " ").trim(); }
 
-async function persistExtraction(sourceId: string | null, sourceUrl: string, extraction: ScholarshipExtraction) {
+async function persistExtraction(sourceId: string | null, sourceUrl: string, extraction: ScholarshipExtraction, links: Array<{ url: string }>) {
+  const gate = evaluateAlgeriaGate(extraction, sourceUrl, links);
   const data = {
     sourceId, title: extraction.title, normalizedTitle: normalizeTitle(extraction.title), provider: extraction.provider,
     institution: extraction.institution, hostCountry: extraction.host_country, eligibleNationalities: extraction.eligible_nationalities,
@@ -44,9 +46,12 @@ async function persistExtraction(sourceId: string | null, sourceUrl: string, ext
     languageRequirements: extraction.language_requirements, academicRequirements: extraction.academic_requirements,
     ageRestrictions: extraction.age_restrictions, opensAt: safeDate(extraction.opening_date), deadline: safeDate(extraction.deadline),
     academicYear: extraction.academic_year, requiredDocuments: extraction.required_documents,
-    applicationProcess: extraction.application_process, applicationUrl: extraction.application_url, sourceUrl,
+    applicationProcess: extraction.application_process, applicationUrl: gate.applicationUrl, sourceUrl,
+    algeriaEligibility: extraction.algeria_eligibility, eligibilityReason: extraction.algeria_eligibility_reason,
+    opportunityType: extraction.opportunity_type, applicationStatus: extraction.application_status,
+    directApplicationVerified: gate.directApplicationVerified, rejectionReason: gate.accepted ? null : gate.reasons.join("; "),
     publicationDate: safeDate(extraction.publication_date), language: extraction.language, confidence: extraction.confidence,
-    status: "NEEDS_REVIEW" as const,
+    status: gate.accepted ? "NEEDS_REVIEW" as const : "REJECTED" as const,
   };
   const existing = await db.scholarship.findFirst({ where: { normalizedTitle: data.normalizedTitle, provider: data.provider, academicYear: data.academicYear } });
   const result = await db.$transaction(async (tx) => {
@@ -58,14 +63,28 @@ async function persistExtraction(sourceId: string | null, sourceUrl: string, ext
     if (extraction.evidence.length) await tx.scholarshipEvidence.createMany({ data: extraction.evidence.map((item) => ({ scholarshipId: scholarship.id, field: item.field, value: item.value == null ? Prisma.JsonNull : item.value as Prisma.InputJsonValue, sourceUrl, evidenceText: item.evidence_text })) });
     return { scholarship, isNew: !existing };
   });
-  if (result.isNew) await scheduleNewCandidateNotification(result.scholarship.id).catch((notificationError) => logger.warn({ scholarshipId: result.scholarship.id, notificationError }, "Could not schedule candidate notification"));
+  if (result.isNew && gate.accepted) await scheduleNewCandidateNotification(result.scholarship.id).catch((notificationError) => logger.warn({ scholarshipId: result.scholarship.id, notificationError }, "Could not schedule candidate notification"));
   return result.scholarship;
 }
 
 export async function processCrawlJob(crawlJobId: string) {
+  const initial = await db.crawlJob.findUnique({ where: { id: crawlJobId }, include: { source: { select: { enabled: true } } } });
+  if (!initial) throw new Error("Crawl job not found");
+  if (initial.status === "CANCELLED" || initial.source?.enabled === false) {
+    await db.crawlJob.update({ where: { id: crawlJobId }, data: { status: "CANCELLED", finishedAt: new Date(), error: "Stopped because this website is disabled" } });
+    return;
+  }
   const job = await db.crawlJob.update({ where: { id: crawlJobId }, data: { status: "ACTIVE", startedAt: new Date(), error: null } });
   try {
     while (true) {
+      const live = await db.crawlJob.findUnique({ where: { id: crawlJobId }, include: { source: { select: { enabled: true } } } });
+      if (!live || live.status === "CANCELLED" || live.source?.enabled === false) {
+        await db.$transaction([
+          db.crawlJob.update({ where: { id: crawlJobId }, data: { status: "CANCELLED", finishedAt: new Date(), error: "Stopped by administrator" } }),
+          db.crawlFrontier.updateMany({ where: { crawlJobId, status: { in: ["PENDING", "PROCESSING"] } }, data: { status: "SKIPPED", lastError: "Stopped by administrator" } }),
+        ]);
+        return;
+      }
       const current = await db.crawlFrontier.findFirst({ where: { crawlJobId, status: "PENDING" }, orderBy: { createdAt: "asc" } });
       if (!current || job.pageLimit <= (await db.crawlFrontier.count({ where: { crawlJobId, status: "VISITED" } }))) break;
       await db.crawlFrontier.update({ where: { id: current.id }, data: { status: "PROCESSING", attempts: { increment: 1 } } });
@@ -79,7 +98,7 @@ export async function processCrawlJob(crawlJobId: string) {
           : xmlDocument
             ? extractXml(rawText, fetched.url)
             : extractHtml(rawText, fetched.url);
-        if (config.CRAWLER_BROWSER_ENABLED && !fetched.contentType.includes("pdf") && !xmlDocument && needsBrowserRendering(rawText, page.content)) {
+        if (config.CRAWLER_BROWSER_ENABLED && !fetched.contentType.includes("pdf") && !xmlDocument && needsBrowserInspection(rawText, page.content, page.links)) {
           const rendered = await renderPublicPage(fetched.url);
           resolvedUrl = rendered.url;
           page = extractHtml(rendered.html, rendered.url);
@@ -105,8 +124,8 @@ export async function processCrawlJob(crawlJobId: string) {
             const ids = new Set(decision.actions.flatMap((a) => a.type === "FOLLOW_LINKS" ? a.link_ids : []));
             if (ids.size) selected = page.links.filter((link) => ids.has(link.id)).slice(0, config.CRAWLER_MAX_CHILD_URLS);
             if (decision.is_scholarship_related) {
-              const extracted = await invokeStructuredAI("SCHOLARSHIP_EXTRACTION", extractionPrompt, { url: resolvedUrl, title: page.title, content: page.content.slice(0, 50000) }, scholarshipExtractionSchema);
-              if (extracted) await persistExtraction(job.sourceId, resolvedUrl, extracted);
+              const extracted = await invokeStructuredAI("SCHOLARSHIP_EXTRACTION", extractionPrompt, { url: resolvedUrl, title: page.title, content: page.content.slice(0, 50000), links: page.links }, scholarshipExtractionSchema);
+              if (extracted) await persistExtraction(job.sourceId, resolvedUrl, extracted, page.links);
             }
           }
         }

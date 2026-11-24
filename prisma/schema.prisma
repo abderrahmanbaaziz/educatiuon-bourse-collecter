@@ -66,6 +66,26 @@ enum NotificationStatus {
   FAILED
   SKIPPED
 }
+enum AlgeriaEligibility {
+  CONFIRMED
+  NOT_ELIGIBLE
+  UNKNOWN
+}
+enum OpportunityType {
+  SCHOLARSHIP
+  INVITATION
+  CONFERENCE
+  TRAINING
+  EXCHANGE_NOTICE
+  OTHER
+  UNKNOWN
+}
+enum ApplicationStatus {
+  OPEN
+  UPCOMING
+  CLOSED
+  UNKNOWN
+}
 
 model Source {
   id                 String @id @default(cuid())
@@ -204,6 +224,12 @@ model Scholarship {
   requiredDocuments     String[] @default([])
   applicationProcess    String?
   applicationUrl        String?
+  algeriaEligibility    AlgeriaEligibility @default(UNKNOWN)
+  eligibilityReason     String?
+  opportunityType       OpportunityType @default(UNKNOWN)
+  applicationStatus     ApplicationStatus @default(UNKNOWN)
+  directApplicationVerified Boolean @default(false)
+  rejectionReason       String?
   sourceUrl             String
   publicationDate       DateTime?
   language              String?
