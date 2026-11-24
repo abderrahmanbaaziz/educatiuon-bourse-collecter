@@ -42,6 +42,22 @@ export async function enqueueNotification(deliveryId: string) {
   });
 }
 
+export async function retryNotification(deliveryId: string) {
+  const queue = getNotificationQueue();
+  const existing = await queue.getJob(deliveryId);
+  if (!existing) return enqueueNotification(deliveryId);
+  const state = await existing.getState();
+  if (state === "failed") {
+    await existing.retry("failed");
+    return existing;
+  }
+  if (state === "completed") {
+    await existing.remove();
+    return enqueueNotification(deliveryId);
+  }
+  return existing;
+}
+
 export async function enqueueAutomation(name: string, data: Record<string, unknown> = {}) {
   return getAutomationQueue().add(name, data, {
     attempts: 2,
