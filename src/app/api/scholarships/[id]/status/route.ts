@@ -19,7 +19,6 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
     if(!scholarship)return NextResponse.json({error:"Scholarship not found"},{status:404});
     if(!allowedTransitions[scholarship.status].includes(input.status))return NextResponse.json({error:`Transition ${scholarship.status} -> ${input.status} is not allowed`},{status:409});
     if(input.trustSource && input.status !== "VERIFIED")return NextResponse.json({error:"A source can only be trusted during verification"},{status:400});
-    if(input.trustSource && !scholarship.sourceId)return NextResponse.json({error:"This record has no registered source to trust"},{status:422});
     if(input.status==="VERIFIED"){
       const effectiveTrustLevel=input.trustSource ? "TRUSTED" : scholarship.source?.trustLevel??null;
       const policy=evaluateVerification({currentStatus:scholarship.status,trustLevel:effectiveTrustLevel,evidenceFields:scholarship.evidence.map((item)=>item.field),sourceUrl:scholarship.sourceUrl,applicationUrl:scholarship.applicationUrl});
@@ -27,7 +26,7 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
     }
     const updated=await db.$transaction(async(tx)=>{
       if(input.trustSource && scholarship.sourceId && scholarship.source?.trustLevel === "UNVERIFIED")await tx.source.update({where:{id:scholarship.sourceId},data:{trustLevel:"TRUSTED"}});
-      const reason=input.trustSource ? `${input.reason} (source manually marked trusted during review)` : input.reason;
+      const reason=input.trustSource ? `${input.reason} (linked source manually approved during review)` : input.reason;
       await tx.scholarshipStatusHistory.create({data:{scholarshipId:id,fromStatus:scholarship.status,toStatus:input.status,reason,actor:input.actor}});
       return tx.scholarship.update({where:{id},data:{status:input.status}})
     });

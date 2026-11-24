@@ -200,9 +200,9 @@ label { display: grid; gap: 6px; color: var(--text-secondary); font-size: 13px; 
   .heading { margin-bottom: 20px; padding-bottom: 16px; }
   .table { min-width: 720px; }
   .review-backdrop { place-items: stretch; padding: 0; }
-  .review-dialog { width: 100%; max-height: 100vh; min-height: 100vh; border-radius: 0; }
+  .review-dialog { width: 100%; max-height: 100vh; min-height: 100vh; display: block; overflow-y: auto; border-radius: 0; }
   .review-header, .review-link-bar, .review-decision { padding-inline: 16px; }
-  .review-scroll { grid-template-columns: 1fr; gap: 20px; padding: 20px 16px; }
+  .review-scroll { overflow: visible; grid-template-columns: 1fr; gap: 20px; padding: 20px 16px; }
   .review-section:last-child { grid-column: auto; }
   .evidence-item { grid-template-columns: 1fr; gap: 6px; }
   .evidence-item a { white-space: normal; }

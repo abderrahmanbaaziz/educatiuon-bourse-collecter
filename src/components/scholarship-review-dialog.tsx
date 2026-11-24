@@ -190,7 +190,7 @@ export function ScholarshipReviewDialog({ scholarshipId, onClose, onStatusChange
 
   const applicationUrl = safeUrl(detail?.applicationUrl);
   const sourceUrl = safeUrl(detail?.sourceUrl);
-  const sourceNeedsTrust = detail?.source?.trustLevel === "UNVERIFIED";
+  const sourceNeedsTrust = Boolean(detail && (!detail.source || detail.source.trustLevel === "UNVERIFIED"));
 
   return <div className="review-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}>
     <section className="review-dialog" ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="review-title" aria-describedby="review-summary">
@@ -264,7 +264,7 @@ export function ScholarshipReviewDialog({ scholarshipId, onClose, onStatusChange
               <strong>{detail.verification.allowed ? "Ready for verification" : "Review requirements"}</strong>
               {detail.verification.reasons.length ? <ul>{detail.verification.reasons.map((item) => <li key={item}>{statusLabel(item)}</li>)}</ul> : <p>Identity, critical details, application link, and source trust checks passed.</p>}
             </div>
-            {sourceNeedsTrust && <label className="trust-source"><input type="checkbox" checked={trustSource} onChange={(event) => setTrustSource(event.target.checked)} /><span><strong>Mark this source as trusted</strong><small>I reviewed the linked source and confirm it is suitable for future verification decisions.</small></span></label>}
+            {sourceNeedsTrust && <label className="trust-source"><input type="checkbox" checked={trustSource} onChange={(event) => setTrustSource(event.target.checked)} /><span><strong>Approve the linked source for this scholarship</strong><small>I opened the source page, reviewed the evidence, and confirm it is suitable for this verification decision.</small></span></label>}
           </>}
           <label htmlFor="review-reason">Review note<textarea id="review-reason" rows={3} maxLength={1000} value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Record what you checked and why this decision is appropriate." /></label>
           {actionError && <p className="review-action-error" role="alert">{actionError}</p>}
