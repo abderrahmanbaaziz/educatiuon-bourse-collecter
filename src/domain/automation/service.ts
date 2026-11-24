@@ -6,13 +6,14 @@ import { enqueueAutomation } from "@/lib/queue";
 import { buildTargetedDorks, generateDomainDorks, rotateDorks } from "@/domain/discovery/dorks";
 import { runSerpSearch } from "@/domain/search/serpapi";
 import { startSourceCrawl } from "@/domain/sources/service";
-import { escapeTelegramHtml, getTelegramUpdates, sendTelegramMessage } from "@/domain/notifications/telegram";
+import { escapeTelegramHtml, getTelegramUpdates, sendTelegramMessage, telegramUpdateSchema } from "@/domain/notifications/telegram";
 
 const taskSchema = z.discriminatedUnion("name", [
   z.object({ name: z.literal("scheduled-discovery"), data: z.record(z.string(), z.unknown()).default({}) }),
   z.object({ name: z.literal("weekly-watch"), data: z.record(z.string(), z.unknown()).default({}) }),
   z.object({ name: z.literal("telegram-poll"), data: z.record(z.string(), z.unknown()).default({}) }),
   z.object({ name: z.literal("telegram-discovery"), data: z.object({ request: z.string().min(3).max(120) }) }),
+  z.object({ name: z.literal("telegram-update"), data: z.object({ update: telegramUpdateSchema }) }),
 ]);
 
 async function settingValue<T>(key: string, fallback: T): Promise<T> {
@@ -103,29 +104,35 @@ export async function pollTelegramCommands() {
   let accepted = 0;
   for (const update of updates) {
     offset = Math.max(offset, update.update_id + 1);
-    const message = update.message;
-    if (!message?.text || String(message.chat.id) !== config.TELEGRAM_CHAT_ID) continue;
-    const command = message.text.trim();
-    if (/^\/(start|help)(?:@\w+)?$/i.test(command)) {
-      await sendTelegramMessage("<b>Bourse Collector commands</b>\n/discover computer science master\n/search renewable energy phd\n\nEach request runs up to three paid searches. Scheduled discovery runs twice daily.");
-      continue;
-    }
-    const match = command.match(/^\/(?:discover|search)(?:@\w+)?\s+(.{3,120})$/i);
-    if (!match) continue;
-    const lastAt = Date.parse(String(await settingValue("telegram.lastDiscoveryAt", "1970-01-01T00:00:00.000Z")));
-    const remaining = config.TELEGRAM_DISCOVERY_COOLDOWN_SECONDS * 1000 - (Date.now() - lastAt);
-    if (remaining > 0) {
-      await sendTelegramMessage(`Please wait ${Math.ceil(remaining / 1000)} seconds before another discovery request.`);
-      continue;
-    }
-    const request = match[1].replace(/\s+/g, " ").trim();
-    await putSetting("telegram.lastDiscoveryAt", new Date().toISOString(), "Last accepted Telegram discovery command");
-    await enqueueAutomation("telegram-discovery", { request });
-    await sendTelegramMessage(`Discovery queued for: <b>${escapeTelegramHtml(request)}</b>`);
-    accepted++;
+    const result = await handleTelegramUpdate(update);
+    if (result.accepted) accepted++;
   }
   await putSetting("telegram.updateOffset", offset, "Last consumed Telegram update offset");
   return { skipped: false, received: updates.length, accepted, offset };
+}
+
+export async function handleTelegramUpdate(input: unknown) {
+  const update = telegramUpdateSchema.parse(input);
+  const message = update.message;
+  if (!message?.text || String(message.chat.id) !== config.TELEGRAM_CHAT_ID) return { accepted: false, reason: "unauthorized-or-empty" };
+  const command = message.text.trim();
+  if (/^\/(start|help)(?:@\w+)?$/i.test(command)) {
+    await sendTelegramMessage("<b>Bourse Collector commands</b>\n/discover computer science master\n/search renewable energy phd\n\nEach request runs up to three paid searches. Scheduled discovery runs twice daily.");
+    return { accepted: false, reason: "help" };
+  }
+  const match = command.match(/^\/(?:discover|search)(?:@\w+)?\s+(.{3,120})$/i);
+  if (!match) return { accepted: false, reason: "unsupported-command" };
+  const lastAt = Date.parse(String(await settingValue("telegram.lastDiscoveryAt", "1970-01-01T00:00:00.000Z")));
+  const remaining = config.TELEGRAM_DISCOVERY_COOLDOWN_SECONDS * 1000 - (Date.now() - lastAt);
+  if (remaining > 0) {
+    await sendTelegramMessage(`Please wait ${Math.ceil(remaining / 1000)} seconds before another discovery request.`);
+    return { accepted: false, reason: "cooldown" };
+  }
+  const request = match[1].replace(/\s+/g, " ").trim();
+  await putSetting("telegram.lastDiscoveryAt", new Date().toISOString(), "Last accepted Telegram discovery command");
+  await enqueueAutomation("telegram-discovery", { request });
+  await sendTelegramMessage(`Discovery queued for: <b>${escapeTelegramHtml(request)}</b>`);
+  return { accepted: true, reason: "queued" };
 }
 
 export async function processAutomationTask(name: string, data: unknown) {
@@ -133,5 +140,6 @@ export async function processAutomationTask(name: string, data: unknown) {
   if (task.name === "scheduled-discovery") return runScheduledDiscovery();
   if (task.name === "weekly-watch") return runWeeklySourceWatch();
   if (task.name === "telegram-poll") return pollTelegramCommands();
+  if (task.name === "telegram-update") return handleTelegramUpdate(task.data.update);
   return runTargetedTelegramDiscovery(task.data.request);
 }

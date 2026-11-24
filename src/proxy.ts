@@ -5,7 +5,7 @@ import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
 const PUBLIC_FILE = /\.(?:avif|css|gif|ico|jpe?g|js|map|png|svg|webmanifest|webp|woff2?)$/i;
 
 export function isPublicPath(pathname: string): boolean {
-  if (pathname.startsWith("/api/")) return pathname.startsWith("/api/auth/") || pathname === "/api/health";
+  if (pathname.startsWith("/api/")) return pathname.startsWith("/api/auth/") || pathname === "/api/health" || pathname === "/api/telegram/webhook";
   return pathname === "/login" || pathname.startsWith("/_next/") || PUBLIC_FILE.test(pathname);
 }
 

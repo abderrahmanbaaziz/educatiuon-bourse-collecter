@@ -26,6 +26,7 @@ const envSchema = z.object({
   TELEGRAM_DISCOVERY_COOLDOWN_SECONDS: z.coerce.number().int().min(10).max(86400).default(300),
   TELEGRAM_BOT_TOKEN: z.preprocess((value) => value === "" ? undefined : value, z.string().min(20).optional()),
   TELEGRAM_CHAT_ID: z.preprocess((value) => value === "" ? undefined : value, z.string().min(1).optional()),
+  TELEGRAM_WEBHOOK_SECRET: z.preprocess((value) => value === "" ? undefined : value, z.string().regex(/^[A-Za-z0-9_-]{32,256}$/).optional()),
   TELEGRAM_MESSAGE_THREAD_ID: z.preprocess((value) => value === "" ? undefined : value, z.coerce.number().int().positive().optional()),
 });
 
@@ -40,3 +41,4 @@ export const config = envSchema.parse(aliases);
 export const hasAIProvider = Boolean(config.AGENTROUTER_API_KEY && config.AGENTROUTER_BASE_URL);
 export const hasSearchProvider = Boolean(config.SERPAPI_KEY_PRIMARY || config.SERPAPI_KEY_SECONDARY);
 export const hasTelegramProvider = Boolean(config.TELEGRAM_BOT_TOKEN && config.TELEGRAM_CHAT_ID);
+export const hasTelegramWebhook = Boolean(hasTelegramProvider && config.TELEGRAM_WEBHOOK_SECRET);

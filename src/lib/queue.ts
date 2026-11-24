@@ -1,6 +1,6 @@
 import { Queue } from "bullmq";
 import IORedis from "ioredis";
-import { config, hasTelegramProvider } from "./config";
+import { config, hasTelegramProvider, hasTelegramWebhook } from "./config";
 
 export const CRAWL_QUEUE = "crawl-investigations";
 export const NOTIFICATION_QUEUE = "notification-deliveries";
@@ -55,7 +55,8 @@ export async function registerAutomationSchedules() {
   const queue = getAutomationQueue();
   await queue.upsertJobScheduler("twice-daily-dork-discovery", { pattern: config.DISCOVERY_DORK_CRON, tz: config.AUTOMATION_TIMEZONE }, { name: "scheduled-discovery", data: {} });
   await queue.upsertJobScheduler("weekly-source-watch", { pattern: config.SOURCE_WATCH_CRON, tz: config.AUTOMATION_TIMEZONE }, { name: "weekly-watch", data: {} });
-  if (hasTelegramProvider) await queue.upsertJobScheduler("telegram-command-poll", { every: 60_000 }, { name: "telegram-poll", data: {} });
+  if (hasTelegramProvider && !hasTelegramWebhook) await queue.upsertJobScheduler("telegram-command-poll", { every: 60_000 }, { name: "telegram-poll", data: {} });
+  else await queue.removeJobScheduler("telegram-command-poll");
 }
 
 export async function pingRedis() {

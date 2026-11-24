@@ -45,10 +45,11 @@ describe("administrator sessions", () => {
 });
 
 describe("authentication routing", () => {
-  it("allows only login, auth handlers, health, and static assets without a session", () => {
+  it("allows only login, auth handlers, health, the secret-validated webhook, and static assets without a session", () => {
     expect(isPublicPath("/login")).toBe(true);
     expect(isPublicPath("/api/auth/login")).toBe(true);
     expect(isPublicPath("/api/health")).toBe(true);
+    expect(isPublicPath("/api/telegram/webhook")).toBe(true);
     expect(isPublicPath("/_next/static/app.js")).toBe(true);
     expect(isPublicPath("/brand/logo.png")).toBe(true);
     expect(isPublicPath("/")).toBe(false);

@@ -2,15 +2,16 @@ import { z } from "zod";
 import { config, hasTelegramProvider } from "@/lib/config";
 
 const responseSchema = z.object({ ok:z.boolean(), result:z.object({ message_id:z.number() }).optional(), description:z.string().optional(), parameters:z.object({ retry_after:z.number().optional() }).optional() });
+export const telegramUpdateSchema = z.object({
+  update_id: z.number().int(),
+  message: z.object({
+    text: z.string().optional(),
+    chat: z.object({ id: z.union([z.number(), z.string()]) }),
+  }).optional(),
+});
 const updatesResponseSchema = z.object({
   ok: z.boolean(),
-  result: z.array(z.object({
-    update_id: z.number().int(),
-    message: z.object({
-      text: z.string().optional(),
-      chat: z.object({ id: z.union([z.number(), z.string()]) }),
-    }).optional(),
-  })).default([]),
+  result: z.array(telegramUpdateSchema).default([]),
   description: z.string().optional(),
   parameters: z.object({ retry_after: z.number().int().positive().optional() }).optional(),
 });
