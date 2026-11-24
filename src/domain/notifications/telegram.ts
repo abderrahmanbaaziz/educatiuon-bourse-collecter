@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { config, hasTelegramProvider } from "@/lib/config";
+import { config, hasTelegramProvider, hasTelegramWebhook } from "@/lib/config";
 
 const responseSchema = z.object({ ok:z.boolean(), result:z.object({ message_id:z.number() }).optional(), description:z.string().optional(), parameters:z.object({ retry_after:z.number().optional() }).optional() });
 export const telegramUpdateSchema = z.object({
@@ -55,4 +55,22 @@ export async function getTelegramUpdates(offset: number) {
   if(response.status === 429 && payload.parameters?.retry_after) return { updates: [], retryAfterSeconds: payload.parameters.retry_after };
   if(!response.ok || !payload.ok) throw new Error(payload.description ?? `Telegram returned HTTP ${response.status}`);
   return { updates: payload.result, retryAfterSeconds: 0 };
+}
+
+export async function ensureTelegramWebhook() {
+  if (!hasTelegramWebhook) return null;
+  const response = await fetch(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/setWebhook`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      url: `https://${config.APP_DOMAIN}/api/telegram/webhook`,
+      secret_token: config.TELEGRAM_WEBHOOK_SECRET,
+      allowed_updates: ["message"],
+      drop_pending_updates: false,
+    }),
+    signal: AbortSignal.timeout(20_000),
+  });
+  const payload = z.object({ ok: z.boolean(), description: z.string().optional() }).parse(await response.json());
+  if (!response.ok || !payload.ok) throw new Error(payload.description ?? `Telegram returned HTTP ${response.status}`);
+  return true;
 }

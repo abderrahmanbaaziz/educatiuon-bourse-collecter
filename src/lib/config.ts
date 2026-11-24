@@ -3,6 +3,7 @@ import { z } from "zod";
 const optionalUrl = z.string().url().optional().or(z.literal(""));
 
 const envSchema = z.object({
+  APP_DOMAIN: z.string().min(1).default("localhost"),
   DATABASE_URL: z.string().min(1).default("postgresql://bourse:bourse@localhost:5432/bourse?schema=public"),
   REDIS_URL: z.string().url().default("redis://localhost:6379"),
   SERPAPI_KEY_PRIMARY: z.string().optional(),

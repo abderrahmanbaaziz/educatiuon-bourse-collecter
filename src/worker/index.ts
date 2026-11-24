@@ -18,6 +18,7 @@ import { db } from "@/lib/db";
 import { processNotificationDelivery } from "@/domain/notifications/process-delivery";
 import { recoverPendingNotifications } from "@/domain/notifications/service";
 import { processAutomationTask } from "@/domain/automation/service";
+import { ensureTelegramWebhook } from "@/domain/notifications/telegram";
 
 async function main() {
   const connection = new IORedis(config.REDIS_URL, {
@@ -66,6 +67,7 @@ async function main() {
     },
   );
   await registerAutomationSchedules();
+  await ensureTelegramWebhook().catch((error) => logger.warn({ error: error instanceof Error ? error.message : String(error) }, "Could not register Telegram webhook; it will retry after the next worker restart"));
   const automationConnection = new IORedis(config.REDIS_URL, {
     maxRetriesPerRequest: null,
   });
