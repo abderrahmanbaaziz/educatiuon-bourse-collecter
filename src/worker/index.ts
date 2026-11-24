@@ -2,9 +2,11 @@ import { Worker } from "bullmq";
 import IORedis from "ioredis";
 import {
   CRAWL_QUEUE,
+  AUTOMATION_QUEUE,
   NOTIFICATION_QUEUE,
   enqueueCrawl,
   enqueueNotification,
+  registerAutomationSchedules,
 } from "@/lib/queue";
 import { config } from "@/lib/config";
 import { logger } from "@/lib/logger";
@@ -15,6 +17,7 @@ import {
 import { db } from "@/lib/db";
 import { processNotificationDelivery } from "@/domain/notifications/process-delivery";
 import { recoverPendingNotifications } from "@/domain/notifications/service";
+import { processAutomationTask } from "@/domain/automation/service";
 
 async function main() {
   const connection = new IORedis(config.REDIS_URL, {
@@ -62,6 +65,18 @@ async function main() {
       limiter: { max: 20, duration: 1000 },
     },
   );
+  await registerAutomationSchedules();
+  const automationConnection = new IORedis(config.REDIS_URL, {
+    maxRetriesPerRequest: null,
+  });
+  const automationWorker = new Worker(
+    AUTOMATION_QUEUE,
+    async (bullJob) => processAutomationTask(bullJob.name, bullJob.data),
+    {
+      connection: automationConnection,
+      concurrency: 1,
+    },
+  );
 
   worker.on("completed", (job) =>
     logger.info({ jobId: job.id }, "Crawl completed"),
@@ -78,6 +93,12 @@ async function main() {
       "Notification delivery failed",
     ),
   );
+  automationWorker.on("completed", (job) =>
+    logger.info({ jobId: job.id, task: job.name }, "Automation completed"),
+  );
+  automationWorker.on("failed", (job, error) =>
+    logger.error({ jobId: job?.id, task: job?.name, error: error.message }, "Automation failed"),
+  );
   logger.info(
     { concurrency: config.CRAWLER_GLOBAL_CONCURRENCY },
     "Crawler worker ready",
@@ -85,8 +106,8 @@ async function main() {
 
   async function shutdown(signal: string) {
     logger.info({ signal }, "Stopping worker");
-    await Promise.all([worker.close(), notificationWorker.close()]);
-    await Promise.all([connection.quit(), notificationConnection.quit()]);
+    await Promise.all([worker.close(), notificationWorker.close(), automationWorker.close()]);
+    await Promise.all([connection.quit(), notificationConnection.quit(), automationConnection.quit()]);
     await db.$disconnect();
     process.exit(0);
   }

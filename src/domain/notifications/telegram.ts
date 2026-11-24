@@ -2,6 +2,17 @@ import { z } from "zod";
 import { config, hasTelegramProvider } from "@/lib/config";
 
 const responseSchema = z.object({ ok:z.boolean(), result:z.object({ message_id:z.number() }).optional(), description:z.string().optional(), parameters:z.object({ retry_after:z.number().optional() }).optional() });
+const updatesResponseSchema = z.object({
+  ok: z.boolean(),
+  result: z.array(z.object({
+    update_id: z.number().int(),
+    message: z.object({
+      text: z.string().optional(),
+      chat: z.object({ id: z.union([z.number(), z.string()]) }),
+    }).optional(),
+  })).default([]),
+  description: z.string().optional(),
+});
 
 export function escapeTelegramHtml(value:string) { return value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function escapeTelegramAttribute(value:string) { return escapeTelegramHtml(value).replace(/"/g,"&quot;"); }
@@ -18,6 +29,10 @@ export function formatScholarshipMessage(scholarship:{title:string;provider:stri
   return lines.join("\n").slice(0,4096);
 }
 
+export function formatCandidateMessage(scholarship:{title:string;provider:string|null;institution:string|null;hostCountry:string|null;degreeLevels:string[];fundingCategory:string;deadline:Date|null;eligibleNationalities:string[];applicationUrl:string|null;sourceUrl:string}) {
+  return formatScholarshipMessage(scholarship).replace("<b>New verified scholarship</b>", "<b>New scholarship candidate</b>\nNeeds dashboard review");
+}
+
 export function formatCrawlFailureMessage(job:{id:string;rootUrl:string;error:string|null;source:{providerName:string}|null}) {
   return [`<b>Crawler failure</b>`,`Source: ${escapeTelegramHtml(job.source?.providerName??job.rootUrl)}`,`Job: <code>${escapeTelegramHtml(job.id)}</code>`,`Error: ${escapeTelegramHtml(job.error??"Unknown error")}`].join("\n").slice(0,4096);
 }
@@ -28,4 +43,13 @@ export async function sendTelegramMessage(text:string) {
   const payload=responseSchema.parse(await response.json());
   if(!response.ok||!payload.ok||!payload.result)throw new Error(payload.description??`Telegram returned HTTP ${response.status}`);
   return String(payload.result.message_id);
+}
+
+export async function getTelegramUpdates(offset: number) {
+  if(!hasTelegramProvider) return [];
+  const params = new URLSearchParams({ offset: String(offset), limit: "20", timeout: "0", allowed_updates: JSON.stringify(["message"]) });
+  const response = await fetch(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/getUpdates?${params}`, { signal: AbortSignal.timeout(12_000) });
+  const payload = updatesResponseSchema.parse(await response.json());
+  if(!response.ok || !payload.ok) throw new Error(payload.description ?? `Telegram returned HTTP ${response.status}`);
+  return payload.result;
 }

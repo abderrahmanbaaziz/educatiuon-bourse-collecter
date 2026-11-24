@@ -30,7 +30,7 @@ export function SearchIntelligence() {
   }
 
   return <>
-    <div className="notice">No provider credits are consumed automatically. Submitting this form asks for confirmation and performs exactly one search request.</div>
+    <div className="notice">Scheduled discovery rotates through registered source domains twice daily. This form performs one additional paid search after confirmation.</div>
     <section className="panel">
       <h2>Run a targeted query</h2>
       <form className="form-grid" onSubmit={submit}>

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { config } from "@/lib/config";
 import { canonicalizeUrl } from "@/domain/crawler/url-policy";
 import { enqueueCrawl } from "@/lib/queue";
+import { sameSite } from "@/domain/crawler/url-policy";
 
 const responseSchema = z.object({
   search_metadata: z.object({ status: z.string().optional() }).passthrough().optional(),
@@ -26,7 +27,7 @@ async function selectAccount() {
   return available[0];
 }
 
-export async function runSerpSearch(query: string, language = "en") {
+export async function runSerpSearch(query: string, language = "en", sourceId?: string) {
   const paused = await db.systemSetting.findUnique({ where: { key: "discovery.paused" } });
   if (paused?.value === true) throw new Error("Discovery is paused");
   const total = await db.aPIUsage.aggregate({ where: { provider: "serpapi", billingMonth: billingMonth() }, _sum: { requests: true } });
@@ -51,10 +52,12 @@ export async function runSerpSearch(query: string, language = "en") {
       await tx.searchRun.update({ where: { id: run.id }, data: { status: "SUCCEEDED", resultCount: normalized.length, newUrlCount: newUrls } });
       await tx.aPIUsage.create({ data: { provider: "serpapi", account: account.name, operation: "google_search", billingMonth: billingMonth() } });
     });
+    const source = sourceId ? await db.source.findUnique({ where: { id: sourceId }, select: { scholarshipUrl: true } }) : null;
     for (const result of normalized.slice(0, 10)) {
       const existing = await db.crawlJob.findFirst({ where: { rootUrl: result.canonicalUrl, status: { in: ["QUEUED", "ACTIVE", "SUCCEEDED"] } } });
       if (existing) continue;
-      const crawl = await db.crawlJob.create({ data: { rootUrl: result.canonicalUrl, maxDepth: config.CRAWLER_MAX_DEPTH, pageLimit: config.CRAWLER_DEFAULT_DOMAIN_PAGE_LIMIT, frontier: { create: { url: result.canonicalUrl, canonicalUrl: result.canonicalUrl, depth: 0 } } } });
+      const linkedSourceId = source && sameSite(source.scholarshipUrl, result.canonicalUrl) ? sourceId : undefined;
+      const crawl = await db.crawlJob.create({ data: { sourceId: linkedSourceId, rootUrl: result.canonicalUrl, maxDepth: config.CRAWLER_MAX_DEPTH, pageLimit: config.CRAWLER_DEFAULT_DOMAIN_PAGE_LIMIT, frontier: { create: { url: result.canonicalUrl, canonicalUrl: result.canonicalUrl, depth: 0 } } } });
       await enqueueCrawl(crawl.id);
     }
     return { id: run.id, account: account.name, resultCount: normalized.length, newUrlCount: newUrls };

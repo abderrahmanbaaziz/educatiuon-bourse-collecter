@@ -78,7 +78,11 @@ npm test
 npm run build
 ```
 
-Real SerpAPI calls are never made by setup/tests. The Search Intelligence form requires a browser confirmation and sends `confirmPaidRequest: true`. Search results remain distinct from scholarships and seed persistent crawl jobs. AI calls occur only for explicitly started crawl investigations when an AI provider is configured.
+Real SerpAPI calls are never made by setup/tests. In production, the worker deduplicates registered sources by domain and rotates through six domain-specific dorks at 07:00 and 19:00 in `AUTOMATION_TIMEZONE`. This stays below the default 6,000-request annualized monthly allowance while leaving room for manual and Telegram-triggered searches. The Search Intelligence form still requires browser confirmation for each additional request. Search results remain distinct from scholarships and seed persistent crawl jobs.
+
+The weekly source watcher runs every Sunday at 03:00 by default. It queues every enabled source in priority order, continues traversing relevant links, and skips AI navigation/extraction when a stored page's content hash is unchanged. Configure the schedules with `DISCOVERY_DORK_CRON`, `SOURCE_WATCH_CRON`, `AUTOMATION_TIMEZONE`, and `DISCOVERY_DORKS_PER_RUN`.
+
+In the authorized Telegram chat, `/discover computer science master` or `/search renewable energy phd` queues up to three targeted paid searches. `/help` lists commands. Only `TELEGRAM_CHAT_ID` is accepted, requests have a configurable cooldown, and newly extracted candidates are sent for dashboard review when `notifications.telegram.newCandidates` is enabled.
 
 ## API highlights
 

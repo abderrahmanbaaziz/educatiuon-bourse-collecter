@@ -12,6 +12,7 @@ async function createDelivery(eventType:string,entityType:string,entityId:string
 }
 
 export async function scheduleVerifiedScholarshipNotification(scholarshipId:string){if(!(await enabled("notifications.telegram.verifiedScholarships")))return null;return createDelivery("SCHOLARSHIP_VERIFIED","Scholarship",scholarshipId)}
+export async function scheduleNewCandidateNotification(scholarshipId:string){if(!(await enabled("notifications.telegram.newCandidates")))return null;return createDelivery("SCHOLARSHIP_CANDIDATE","Scholarship",scholarshipId)}
 export async function scheduleCrawlFailureNotification(crawlJobId:string){if(!(await enabled("notifications.telegram.crawlFailures")))return null;return createDelivery("CRAWL_FAILED","CrawlJob",crawlJobId)}
 export async function scheduleTelegramTest(){return createDelivery("TEST","System",`test-${Date.now()}`,true)}
 

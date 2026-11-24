@@ -11,6 +11,7 @@ import { invokeStructuredAI } from "../ai/client";
 import { aiDecisionSchema, scholarshipExtractionSchema, validateSelectedLinks, type ScholarshipExtraction } from "../ai/schemas";
 import { extractionPrompt, navigationPrompt } from "../ai/prompts";
 import { scheduleCrawlFailureNotification } from "../notifications/service";
+import { scheduleNewCandidateNotification } from "../notifications/service";
 
 const scholarshipTerms = /scholar|bourse|fellowship|grant|funding|erasmus/i;
 
@@ -48,15 +49,17 @@ async function persistExtraction(sourceId: string | null, sourceUrl: string, ext
     status: "NEEDS_REVIEW" as const,
   };
   const existing = await db.scholarship.findFirst({ where: { normalizedTitle: data.normalizedTitle, provider: data.provider, academicYear: data.academicYear } });
-  return db.$transaction(async (tx) => {
+  const result = await db.$transaction(async (tx) => {
     const scholarship = existing
       ? await tx.scholarship.update({ where: { id: existing.id }, data })
       : await tx.scholarship.create({ data });
     if (existing) await tx.scholarshipVersion.create({ data: { scholarshipId: scholarship.id, snapshot: existing, reason: "Re-extracted from source" } });
     await tx.scholarshipEvidence.deleteMany({ where: { scholarshipId: scholarship.id, sourceUrl } });
     if (extraction.evidence.length) await tx.scholarshipEvidence.createMany({ data: extraction.evidence.map((item) => ({ scholarshipId: scholarship.id, field: item.field, value: item.value == null ? Prisma.JsonNull : item.value as Prisma.InputJsonValue, sourceUrl, evidenceText: item.evidence_text })) });
-    return scholarship;
+    return { scholarship, isNew: !existing };
   });
+  if (result.isNew) await scheduleNewCandidateNotification(result.scholarship.id).catch((notificationError) => logger.warn({ scholarshipId: result.scholarship.id, notificationError }, "Could not schedule candidate notification"));
+  return result.scholarship;
 }
 
 export async function processCrawlJob(crawlJobId: string) {
@@ -81,14 +84,17 @@ export async function processCrawlJob(crawlJobId: string) {
           resolvedUrl = rendered.url;
           page = extractHtml(rendered.html, rendered.url);
         }
+        const resolvedCanonicalUrl = canonicalizeUrl(resolvedUrl);
+        const existingPage = job.sourceId ? await db.sourcePage.findUnique({ where: { canonicalUrl: resolvedCanonicalUrl }, select: { contentHash: true } }) : null;
+        const contentChanged = !existingPage || existingPage.contentHash !== page.contentHash;
         if (job.sourceId) await db.sourcePage.upsert({
-          where: { canonicalUrl: canonicalizeUrl(resolvedUrl) },
+          where: { canonicalUrl: resolvedCanonicalUrl },
           update: { title: page.title, language: page.language, content: page.content, contentHash: page.contentHash, httpStatus: fetched.status, fetchedAt: new Date(), links: page.links },
-          create: { sourceId: job.sourceId, url: resolvedUrl, canonicalUrl: canonicalizeUrl(resolvedUrl), title: page.title, language: page.language, content: page.content, contentHash: page.contentHash, httpStatus: fetched.status, links: page.links },
+          create: { sourceId: job.sourceId, url: resolvedUrl, canonicalUrl: resolvedCanonicalUrl, title: page.title, language: page.language, content: page.content, contentHash: page.contentHash, httpStatus: fetched.status, links: page.links },
         });
 
         let selected = xmlDocument ? page.links.slice(0, config.CRAWLER_MAX_CHILD_URLS) : rankRelevantLinks(page.links, config.CRAWLER_MAX_CHILD_URLS);
-        if (hasAIProvider && page.content.length > 100) {
+        if (hasAIProvider && page.content.length > 100 && contentChanged) {
           const decision = await invokeStructuredAI("CRAWL_NAVIGATION", navigationPrompt, {
             goal: "Find complete official scholarship eligibility, funding, deadline, and application information",
             url: resolvedUrl, title: page.title, content: page.content.slice(0, 30000), links: page.links,

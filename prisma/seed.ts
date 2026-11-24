@@ -9,6 +9,7 @@ const defaults = [
   ["budget.aiMonthlyUsd", Number(process.env.AI_MONTHLY_BUDGET_USD ?? 30), "Monthly AI spend ceiling"],
   ["budget.serpApiMonthly", Number(process.env.SERPAPI_MONTHLY_BUDGET ?? 6000), "Monthly search request ceiling"],
   ["notifications.telegram.enabled", false, "Master switch for Telegram deliveries"],
+  ["notifications.telegram.newCandidates", true, "Announce newly extracted scholarship candidates"],
   ["notifications.telegram.verifiedScholarships", true, "Announce scholarships after human verification"],
   ["notifications.telegram.crawlFailures", false, "Send crawler failure alerts"],
 ] as const;

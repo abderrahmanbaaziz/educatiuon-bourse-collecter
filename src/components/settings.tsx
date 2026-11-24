@@ -30,7 +30,7 @@ export function Settings() {
     setMessage(response.ok ? "Test queued. Check Telegram and the delivery history below." : result.error);
   }
 
-  const booleanKeys = new Set(["discovery.paused", "notifications.telegram.enabled", "notifications.telegram.verifiedScholarships", "notifications.telegram.crawlFailures"]);
+  const booleanKeys = new Set(["discovery.paused", "notifications.telegram.enabled", "notifications.telegram.newCandidates", "notifications.telegram.verifiedScholarships", "notifications.telegram.crawlFailures"]);
 
   return <>
     <section className="panel"><h2>Runtime controls</h2><div className="table-wrap"><table className="table">
