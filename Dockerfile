@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
 COPY --from=build /app/public ./public
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
+RUN mkdir -p /app/.next/cache && chown -R node:node /app/.next
 USER node
 EXPOSE 3000
 CMD ["node", "server.js"]
