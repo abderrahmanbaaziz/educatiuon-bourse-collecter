@@ -140,6 +140,8 @@ model CrawlJob {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   frontier     CrawlFrontier[]
+  searchResults SearchResult[]
+  scholarships Scholarship[]
   @@index([status, createdAt])
 }
 
@@ -177,6 +179,11 @@ model SearchRun {
   account        String
   resultCount    Int @default(0)
   newUrlCount    Int @default(0)
+  uniqueDomainCount Int @default(0)
+  queuedUrlCount Int @default(0)
+  skippedUrlCount Int @default(0)
+  trigger        String @default("MANUAL")
+  requestLabel   String?
   status         String
   error          String?
   executedAt     DateTime @default(now())
@@ -189,18 +196,25 @@ model SearchResult {
   searchRun    SearchRun @relation(fields: [searchRunId], references: [id], onDelete: Cascade)
   url          String
   canonicalUrl String
+  domain       String
+  isNew        Boolean @default(false)
+  crawlJobId   String?
+  crawlJob     CrawlJob? @relation(fields: [crawlJobId], references: [id], onDelete: SetNull)
   title        String?
   snippet      String?
   position     Int?
   createdAt    DateTime @default(now())
   @@unique([searchRunId, canonicalUrl])
   @@index([canonicalUrl])
+  @@index([crawlJobId])
 }
 
 model Scholarship {
   id                    String @id @default(cuid())
   sourceId              String?
   source                Source? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  crawlJobId            String?
+  crawlJob              CrawlJob? @relation(fields: [crawlJobId], references: [id], onDelete: SetNull)
   title                 String
   normalizedTitle       String
   provider              String?
@@ -243,6 +257,7 @@ model Scholarship {
   statusHistory         ScholarshipStatusHistory[]
   @@index([status, deadline])
   @@index([normalizedTitle, provider, academicYear])
+  @@index([crawlJobId])
 }
 
 model ScholarshipStatusHistory {

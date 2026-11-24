@@ -44,7 +44,7 @@ export async function runScheduledDiscovery() {
   const globalDorks = globalRotation.selected.map((query) => ({ query, language: /[\u0600-\u06ff]/.test(query) ? "ar" : query.includes("Algérie") ? "fr" : "en", sourceId: undefined as string | undefined }));
   for (const dork of [...selected, ...globalDorks]) {
     try {
-      results.push({ query: dork.query, ok: true, result: await runSerpSearch(dork.query, dork.language, dork.sourceId) });
+      results.push({ query: dork.query, ok: true, result: await runSerpSearch(dork.query, dork.language, dork.sourceId, { trigger: dork.sourceId ? "SCHEDULED_DOMAIN" : "SCHEDULED_GLOBAL" }) });
     } catch (error) {
       results.push({ query: dork.query, ok: false, error: error instanceof Error ? error.message : String(error) });
     }
@@ -73,13 +73,15 @@ export async function runTargetedTelegramDiscovery(request: string) {
   if (!hasSearchProvider) throw new Error("No SerpAPI account is configured");
   const queries = buildTargetedDorks(request);
   let found = 0;
+  let websites = 0;
   let newUrls = 0;
   let failed = 0;
   for (const query of queries) {
     try {
-      const result = await runSerpSearch(query, "en");
+      const result = await runSerpSearch(query, "en", undefined, { trigger: "TELEGRAM", requestLabel: request });
       found += result.resultCount;
-      newUrls += result.newUrlCount;
+      websites += result.uniqueDomainCount;
+      newUrls += result.queuedUrlCount;
     } catch { failed++; }
   }
   await sendTelegramMessage([
@@ -87,10 +89,11 @@ export async function runTargetedTelegramDiscovery(request: string) {
     `Request: ${escapeTelegramHtml(request)}`,
     `Queries: ${queries.length - failed}/${queries.length} succeeded`,
     `Results: ${found}`,
-    `New URLs queued: ${newUrls}`,
+    `Website appearances: ${websites}`,
+    `New crawler jobs queued: ${newUrls}`,
     "New scholarship candidates will be sent after extraction.",
   ].join("\n"));
-  return { request, queries: queries.length, failed, found, newUrls };
+  return { request, queries: queries.length, failed, found, websites, newUrls };
 }
 
 export async function pollTelegramCommands() {

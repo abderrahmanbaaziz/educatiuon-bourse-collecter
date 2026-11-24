@@ -35,10 +35,10 @@ function safeDate(input: string | null): Date | null {
 
 function normalizeTitle(title: string) { return title.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, " ").trim(); }
 
-async function persistExtraction(sourceId: string | null, sourceUrl: string, extraction: ScholarshipExtraction, links: Array<{ url: string }>) {
+async function persistExtraction(crawlJobId: string, sourceId: string | null, sourceUrl: string, extraction: ScholarshipExtraction, links: Array<{ url: string }>) {
   const gate = evaluateAlgeriaGate(extraction, sourceUrl, links);
   const data = {
-    sourceId, title: extraction.title, normalizedTitle: normalizeTitle(extraction.title), provider: extraction.provider,
+    crawlJobId, sourceId, title: extraction.title, normalizedTitle: normalizeTitle(extraction.title), provider: extraction.provider,
     institution: extraction.institution, hostCountry: extraction.host_country, eligibleNationalities: extraction.eligible_nationalities,
     degreeLevels: extraction.degree_levels, academicFields: extraction.academic_fields, fundingCategory: extraction.funding_category,
     tuitionCoverage: extraction.tuition_coverage, monthlyStipend: extraction.monthly_stipend, accommodation: extraction.accommodation,
@@ -125,7 +125,7 @@ export async function processCrawlJob(crawlJobId: string) {
             if (ids.size) selected = page.links.filter((link) => ids.has(link.id)).slice(0, config.CRAWLER_MAX_CHILD_URLS);
             if (decision.is_scholarship_related) {
               const extracted = await invokeStructuredAI("SCHOLARSHIP_EXTRACTION", extractionPrompt, { url: resolvedUrl, title: page.title, content: page.content.slice(0, 50000), links: page.links }, scholarshipExtractionSchema);
-              if (extracted) await persistExtraction(job.sourceId, resolvedUrl, extracted, page.links);
+              if (extracted) await persistExtraction(crawlJobId, job.sourceId, resolvedUrl, extracted, page.links);
             }
           }
         }

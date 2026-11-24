@@ -18,6 +18,15 @@ const accounts = [
 
 function billingMonth() { return new Date().toISOString().slice(0, 7); }
 
+export type SearchContext = { trigger?: "MANUAL" | "TELEGRAM" | "SCHEDULED_DOMAIN" | "SCHEDULED_GLOBAL"; requestLabel?: string };
+
+export function isPotentialScholarshipResult(result: { title?: string; snippet?: string; canonicalUrl: string }) {
+  const text = `${result.title ?? ""} ${result.snippet ?? ""} ${result.canonicalUrl}`;
+  const scholarship = /scholar|bourse|fellowship|studentship|financial[-\s]?aid|grant|funding|منح|منحة/i.test(text);
+  const obviousNoise = /conference|webinar|summer camp|job vacancy|tender|procurement/i.test(text) && !/scholar|bourse|fellowship|studentship/i.test(text);
+  return scholarship && !obviousNoise;
+}
+
 async function selectAccount() {
   if (!accounts.length) throw new Error("No SerpAPI account is configured");
   const usage = await db.aPIUsage.groupBy({ by: ["account"], where: { provider: "serpapi", billingMonth: billingMonth() }, _sum: { requests: true } });
@@ -27,36 +36,41 @@ async function selectAccount() {
   return available[0];
 }
 
-export async function runSerpSearch(query: string, language = "en", sourceId?: string) {
+export async function runSerpSearch(query: string, language = "en", sourceId?: string, context: SearchContext = {}) {
   const paused = await db.systemSetting.findUnique({ where: { key: "discovery.paused" } });
   if (paused?.value === true) throw new Error("Discovery is paused");
   const total = await db.aPIUsage.aggregate({ where: { provider: "serpapi", billingMonth: billingMonth() }, _sum: { requests: true } });
   if ((total._sum.requests ?? 0) >= config.SERPAPI_MONTHLY_BUDGET) throw new Error("Monthly SerpAPI budget is exhausted");
   const account = await selectAccount();
   const searchQuery = await db.searchQuery.upsert({ where: { query_language: { query, language } }, update: {}, create: { query, language } });
-  const run = await db.searchRun.create({ data: { searchQueryId: searchQuery.id, account: account.name, status: "RUNNING" } });
+  const run = await db.searchRun.create({ data: { searchQueryId: searchQuery.id, account: account.name, status: "RUNNING", trigger: context.trigger ?? "MANUAL", requestLabel: context.requestLabel?.slice(0, 120) } });
   try {
     const params = new URLSearchParams({ engine: "google", q: query, hl: language, num: "100", api_key: account.key, output: "json" });
     const response = await fetch(`https://serpapi.com/search?${params}`, { signal: AbortSignal.timeout(45000) });
     if (!response.ok) throw new Error(`SerpAPI returned HTTP ${response.status}`);
     const payload = responseSchema.parse(await response.json());
     if (payload.error) throw new Error(payload.error);
-    const normalized = payload.organic_results.flatMap((result) => { try { return [{ ...result, canonicalUrl: canonicalizeUrl(result.link) }]; } catch { return []; } });
+    const normalized = payload.organic_results.flatMap((result) => { try { const canonicalUrl = canonicalizeUrl(result.link); return [{ ...result, canonicalUrl, domain: new URL(canonicalUrl).hostname.toLowerCase().replace(/^www\./, "") }]; } catch { return []; } });
     let newUrls = 0;
     await db.$transaction(async (tx) => {
       for (const result of normalized) {
-        await tx.searchResult.create({ data: { searchRunId: run.id, url: result.link, canonicalUrl: result.canonicalUrl, title: result.title, snippet: result.snippet, position: result.position } });
         const existed = await tx.searchResult.count({ where: { canonicalUrl: result.canonicalUrl, NOT: { searchRunId: run.id } } });
-        if (!existed) newUrls++;
+        const isNew = existed === 0;
+        if (isNew) newUrls++;
+        await tx.searchResult.create({ data: { searchRunId: run.id, url: result.link, canonicalUrl: result.canonicalUrl, domain: result.domain, isNew, title: result.title, snippet: result.snippet, position: result.position } });
       }
-      await tx.searchRun.update({ where: { id: run.id }, data: { status: "SUCCEEDED", resultCount: normalized.length, newUrlCount: newUrls } });
       await tx.aPIUsage.create({ data: { provider: "serpapi", account: account.name, operation: "google_search", billingMonth: billingMonth() } });
     });
     const source = sourceId ? await db.source.findUnique({ where: { id: sourceId }, select: { id: true, scholarshipUrl: true, enabled: true } }) : null;
     const knownSources = await db.source.findMany({ select: { id: true, scholarshipUrl: true, enabled: true } });
-    for (const result of normalized.slice(0, config.DISCOVERY_RESULTS_PER_QUERY)) {
+    let queuedUrlCount = 0;
+    const relevant = normalized.filter(isPotentialScholarshipResult).slice(0, config.DISCOVERY_RESULTS_PER_QUERY);
+    for (const result of relevant) {
       const existing = await db.crawlJob.findFirst({ where: { rootUrl: result.canonicalUrl, status: { in: ["QUEUED", "ACTIVE", "SUCCEEDED"] } } });
-      if (existing) continue;
+      if (existing) {
+        await db.searchResult.update({ where: { searchRunId_canonicalUrl: { searchRunId: run.id, canonicalUrl: result.canonicalUrl } }, data: { crawlJobId: existing.id } });
+        continue;
+      }
       let linked = source && sameSite(source.scholarshipUrl, result.canonicalUrl) ? source : knownSources.find((item) => sameSite(item.scholarshipUrl, result.canonicalUrl));
       if (linked?.enabled === false) continue;
       if (!linked) {
@@ -79,9 +93,14 @@ export async function runSerpSearch(query: string, language = "en", sourceId?: s
       }
       if (!linked?.enabled) continue;
       const crawl = await db.crawlJob.create({ data: { sourceId: linked.id, rootUrl: result.canonicalUrl, maxDepth: config.CRAWLER_MAX_DEPTH, pageLimit: config.CRAWLER_DEFAULT_DOMAIN_PAGE_LIMIT, frontier: { create: { url: result.canonicalUrl, canonicalUrl: result.canonicalUrl, depth: 0 } } } });
+      await db.searchResult.update({ where: { searchRunId_canonicalUrl: { searchRunId: run.id, canonicalUrl: result.canonicalUrl } }, data: { crawlJobId: crawl.id } });
       await enqueueCrawl(crawl.id);
+      queuedUrlCount++;
     }
-    return { id: run.id, account: account.name, resultCount: normalized.length, newUrlCount: newUrls };
+    const uniqueDomainCount = new Set(normalized.map((result) => result.domain)).size;
+    const skippedUrlCount = normalized.length - queuedUrlCount;
+    await db.searchRun.update({ where: { id: run.id }, data: { status: "SUCCEEDED", resultCount: normalized.length, newUrlCount: newUrls, uniqueDomainCount, queuedUrlCount, skippedUrlCount } });
+    return { id: run.id, account: account.name, resultCount: normalized.length, newUrlCount: newUrls, uniqueDomainCount, queuedUrlCount, skippedUrlCount };
   } catch (error) {
     await db.searchRun.update({ where: { id: run.id }, data: { status: "FAILED", error: error instanceof Error ? error.message : String(error) } });
     await db.aPIUsage.create({ data: { provider: "serpapi", account: account.name, operation: "google_search_failed", billingMonth: billingMonth() } });
