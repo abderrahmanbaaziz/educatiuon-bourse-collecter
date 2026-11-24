@@ -12,6 +12,7 @@ const updatesResponseSchema = z.object({
     }).optional(),
   })).default([]),
   description: z.string().optional(),
+  parameters: z.object({ retry_after: z.number().int().positive().optional() }).optional(),
 });
 
 export function escapeTelegramHtml(value:string) { return value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
@@ -46,10 +47,11 @@ export async function sendTelegramMessage(text:string) {
 }
 
 export async function getTelegramUpdates(offset: number) {
-  if(!hasTelegramProvider) return [];
+  if(!hasTelegramProvider) return { updates: [], retryAfterSeconds: 0 };
   const params = new URLSearchParams({ offset: String(offset), limit: "20", timeout: "45", allowed_updates: JSON.stringify(["message"]) });
   const response = await fetch(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/getUpdates?${params}`, { signal: AbortSignal.timeout(55_000) });
   const payload = updatesResponseSchema.parse(await response.json());
+  if(response.status === 429 && payload.parameters?.retry_after) return { updates: [], retryAfterSeconds: payload.parameters.retry_after };
   if(!response.ok || !payload.ok) throw new Error(payload.description ?? `Telegram returned HTTP ${response.status}`);
-  return payload.result;
+  return { updates: payload.result, retryAfterSeconds: 0 };
 }

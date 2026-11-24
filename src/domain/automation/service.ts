@@ -90,8 +90,16 @@ export async function runTargetedTelegramDiscovery(request: string) {
 
 export async function pollTelegramCommands() {
   if (!hasTelegramProvider) return { skipped: true };
+  const blockedUntil = Date.parse(String(await settingValue("telegram.pollBlockedUntil", "1970-01-01T00:00:00.000Z")));
+  if (blockedUntil > Date.now()) return { skipped: true, reason: "Telegram retry_after cooldown", blockedUntil: new Date(blockedUntil).toISOString() };
   let offset = Number(await settingValue("telegram.updateOffset", 0)) || 0;
-  const updates = await getTelegramUpdates(offset);
+  const poll = await getTelegramUpdates(offset);
+  if (poll.retryAfterSeconds > 0) {
+    const nextAttempt = new Date(Date.now() + (poll.retryAfterSeconds + 5) * 1000).toISOString();
+    await putSetting("telegram.pollBlockedUntil", nextAttempt, "Telegram Bot API retry_after deadline");
+    return { skipped: true, reason: "Telegram rate limit", blockedUntil: nextAttempt };
+  }
+  const updates = poll.updates;
   let accepted = 0;
   for (const update of updates) {
     offset = Math.max(offset, update.update_id + 1);
