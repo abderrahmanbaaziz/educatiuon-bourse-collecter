@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ScholarshipReviewDialog } from "@/components/scholarship-review-dialog";
 
 function badgeClass(status: string) {
   if (["SUCCEEDED", "VERIFIED", "COMPLETED"].includes(status)) return "badge good";
@@ -19,6 +20,7 @@ const dateTimeFormat = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month:
 export function RemoteTable({ endpoint, kind }: { endpoint: string; kind: "scholarships" | "crawls" | "ai" }) {
   const [items, setItems] = useState<any[]>([]);
   const [error, setError] = useState("");
+  const [selectedScholarshipId, setSelectedScholarshipId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(endpoint)
@@ -27,35 +29,19 @@ export function RemoteTable({ endpoint, kind }: { endpoint: string; kind: "schol
       .catch((cause) => setError(cause.message));
   }, [endpoint]);
 
-  async function transition(id: string, status: string) {
-    const reason = prompt(`Reason for ${status.toLowerCase()} status:`);
-    if (!reason) return;
-    const response = await fetch(`/api/scholarships/${id}/status`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ status, reason }),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      alert([result.error, ...(result.reasons ?? [])].join("\n"));
-      return;
-    }
-    setItems(items.map((item) => item.id === id ? { ...item, status: result.status } : item));
-  }
-
   if (error) return <div className="notice">{error}</div>;
   if (!items.length) return <div className="panel empty">No records yet.</div>;
 
-  if (kind === "scholarships") return <section className="panel"><div className="table-wrap"><table className="table">
+  if (kind === "scholarships") return <><section className="panel"><div className="table-wrap"><table className="table">
     <thead><tr><th>Opportunity</th><th>Country</th><th>Funding</th><th>Deadline</th><th>Status</th><th>Evidence</th><th>Review</th></tr></thead>
     <tbody>{items.map((item) => <tr key={item.id}>
       <td>{item.title}<br /><small>{item.provider}</small></td>
       <td>{item.hostCountry ?? "Unknown"}</td><td>{item.fundingCategory}</td>
       <td>{item.deadline ? dateFormat.format(new Date(item.deadline)) : "Unknown"}</td>
       <td><span className={badgeClass(item.status)}>{statusLabel(item.status)}</span></td><td>{item._count.evidence}</td>
-      <td>{item.status === "NEEDS_REVIEW" && <><button className="button" onClick={() => void transition(item.id, "VERIFIED")}>Verify</button><button className="button button-danger" onClick={() => void transition(item.id, "REJECTED")}>Reject</button></>}{item.status === "VERIFIED" && <button className="button button-secondary" onClick={() => void transition(item.id, "NEEDS_REVIEW")}>Reopen</button>}</td>
+      <td><button className={item.status === "NEEDS_REVIEW" ? "button" : "button button-secondary"} type="button" onClick={() => setSelectedScholarshipId(item.id)}>{item.status === "NEEDS_REVIEW" ? "Review" : "View details"}</button></td>
     </tr>)}</tbody>
-  </table></div></section>;
+  </table></div></section><ScholarshipReviewDialog scholarshipId={selectedScholarshipId} onClose={() => setSelectedScholarshipId(null)} onStatusChange={(id, status) => setItems((current) => current.map((item) => item.id === id ? { ...item, status } : item))}/></>;
 
   if (kind === "crawls") return <section className="panel"><div className="table-wrap"><table className="table">
     <thead><tr><th>Source</th><th>Root URL</th><th>Status</th><th>Visited</th><th>Frontier</th><th>Error</th></tr></thead>
