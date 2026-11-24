@@ -23,8 +23,8 @@ EXPOSE 3000
 CMD ["node", "server.js"]
 
 FROM base AS worker
-ENV NODE_ENV=production
-RUN npx playwright install --with-deps chromium
+ENV NODE_ENV=production PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN npx playwright install --with-deps chromium && chmod -R a+rX /ms-playwright
 USER node
 CMD ["npm", "run", "worker"]
 
